@@ -1,0 +1,9 @@
+#!/bin/sh
+
+confdir=$HOME/.ssh
+confsubdir=$confdir/config.d
+
+[ -d $confsubdir ] || mkdir -p $confsubdir
+chmod go-rwx $confdir $confsubdir
+
+cat $confsubdir/* > $confdir/config
