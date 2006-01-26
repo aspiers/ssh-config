@@ -1,6 +1,6 @@
 #autoload
 
-# dsa - Detect Ssh Agent
+# dsa - Detect Ssh Agent (and ensure it has an identity)
 
 detect_ssh_agent || return 1
 
