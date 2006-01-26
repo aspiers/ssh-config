@@ -5,7 +5,7 @@
 detect_ssh_agent || return 1
 
 if ssh-add -l >& /dev/null; then
-    echo "ssh-agent pid $SSH_AGENT_PID has an identity already"
+    #echo "ssh-agent pid $SSH_AGENT_PID has an identity already"
     return 0
 fi
 
