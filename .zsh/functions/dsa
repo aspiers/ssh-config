@@ -2,18 +2,17 @@
 
 # dsa - Detect Ssh Agent
 
-ssh_agent_valid && return 0
+detect_ssh_agent || return 1
 
-_dsa_cache=/tmp/.dsa-cache-$USER-$HOST
-
-if [[ -r "$_dsa_cache" ]]; then
-  source "$_dsa_cache"
-  cat <<EOF 
-Read ssh-agent details from $_dsa_cache :
-    pid:    $SSH_AGENT_PID
-    socket: $SSH_AUTH_SOCK
-EOF
-  ssh_agent_valid && return 0
+if ssh-add -l >& /dev/null; then
+    echo "ssh-agent pid $SSH_AGENT_PID has an identity already"
+    return 0
 fi
 
-recalc_ssh_agent_cache
+if ! [[ -t 0 ]]; then
+    echo "No identities in ssh-agent pid $SSH_AGENT_PID but STDIN not a tty so can't add one :-(" >&2
+    return 1
+fi
+
+echo "ssh-agent pid $SSH_AGENT_PID has no identities; please add one ..."
+ssh-add
