@@ -35,7 +35,7 @@ cat <<EOF > $config
 
 EOF
 
-for conf in $confsubdir/*; do
+$ZDOTDIR/.zsh/functions/find_hooks .ssh/config.d | while read conf; do
   echo "# Include of $conf follows:"
   cat $conf
   echo
