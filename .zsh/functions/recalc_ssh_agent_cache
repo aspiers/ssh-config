@@ -96,7 +96,7 @@ EOF
       _socket_status=matched
     fi
     # The following code indents "$_lsof", i.e. does the same as:
-    #   echo "$lsof" | sed -e 's/^/    /'
+    #   echo "$_lsof" | sed -e 's/^/    /'
     # by splitting at \n into an array (f), substituting start
     # of each element (#s) for '    ' and rejoining with \n (F).
     echo "${(F@)${(f)_lsof}//(#s)/    }"
