@@ -37,7 +37,7 @@ cat <<EOF > $config
 
 EOF
 
-$ZDOTDIR/.zsh/functions/find_hooks .ssh/config.d | while read conf; do
+$ZDOT_FIND_HOOKS .ssh/config.d | while read conf; do
   echo "#   Appending $conf"
   echo "# Include of $conf follows:" >> $config
   cat $conf >> $config
