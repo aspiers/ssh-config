@@ -85,7 +85,7 @@ insecure ssh-agent running.  Please fix.  For more info, see:
   https://www.redhat.com/archives/fedora-devel-list/2004-December/msg00380.html
 
 EOF
-      return 1
+#      return 1
     fi
  
     if [[ "$_lsof" == *sshd* ]]; then
