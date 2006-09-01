@@ -1,8 +1,0 @@
-#autoload
-
-if detect_ssh_agent; then
-    ssh-add "$@"
-else
-    echo "No point running ssh-add $* without valid agent environment." >&2
-    return 1
-fi
