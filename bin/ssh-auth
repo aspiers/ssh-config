@@ -1,0 +1,38 @@
+#!/bin/sh
+
+pubkey=$HOME/.ssh/id_rsa.pub
+authkeys=.ssh/authorized_keys2
+
+if [ "$1" = '-1' ]; then
+  pubkey=$HOME/.ssh/identity.pub
+  authkeys=.ssh/authorized_keys
+  shift
+fi
+
+me=`basename $0`
+
+usage () {
+  cat <<EOF >&2
+Usage: $me [options] [USER@]HOST
+Options:
+  -1   Use old ssh v1 keys
+EOF
+  exit 1
+}
+
+if [ -z "$1" ] || [ "$1" == -h ] || [ "$1" == --help ]; then
+  usage
+fi
+
+if ! [ -e "$pubkey" ]; then
+  echo "$pubkey doesn't exist; aborting." >&2
+  exit 1
+fi
+
+echo "Appending following keys from $pubkey to remote $authkeys:"
+awk '{print "  " $3}' $pubkey
+
+if ! ssh "$1" "cat >> $authkeys" < $pubkey; then
+  echo "ssh failed!" >&2
+  exit 1
+fi
