@@ -32,7 +32,7 @@ fi
 echo "Appending following keys from $pubkey to remote $authkeys:"
 awk '{print "  " $3}' $pubkey
 
-if ! ssh "$1" "cat >> $authkeys" < $pubkey; then
+if ! ssh "$1" "mkdir .ssh; chmod 700 .ssh; cat >> $authkeys" < $pubkey; then
   echo "ssh failed!" >&2
   exit 1
 fi
