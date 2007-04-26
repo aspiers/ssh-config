@@ -1,11 +1,11 @@
 #!/bin/sh
 
+authkeys=.ssh/authorized_keys
+
 pubkey=$HOME/.ssh/id_rsa.pub
-authkeys=.ssh/authorized_keys2
 
 if [ "$1" = '-1' ]; then
   pubkey=$HOME/.ssh/identity.pub
-  authkeys=.ssh/authorized_keys
   shift
 fi
 
@@ -29,10 +29,12 @@ if ! [ -e "$pubkey" ]; then
   exit 1
 fi
 
-echo "Appending following keys from $pubkey to remote $authkeys:"
-awk '{print "  " $3}' $pubkey
+exec ssh-copy-id -i "$pubkey" "$@"
 
-if ! ssh "$1" "mkdir -p .ssh; chmod 700 .ssh; cat >> $authkeys" < $pubkey; then
-  echo "ssh failed!" >&2
-  exit 1
-fi
+# echo "Appending following keys from $pubkey to remote $authkeys:"
+# awk '{print "  " $3}' $pubkey
+
+# if ! ssh "$1" "mkdir -p .ssh; chmod 700 .ssh; cat >> $authkeys" < $pubkey; then
+#   echo "ssh failed!" >&2
+#   exit 1
+# fi
