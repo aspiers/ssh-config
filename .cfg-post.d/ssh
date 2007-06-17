@@ -27,4 +27,4 @@ esac
 
 . $ZDOTDIR/lib/libhooks.sh
 
-rebuild_config "${config#$HOME/}" "${confsubdir#$HOME/}"
+rebuild_config "$config" "${confsubdir#$HOME/}"
