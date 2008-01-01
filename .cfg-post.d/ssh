@@ -5,7 +5,6 @@ confsubdir=$confdir/config.d
 config=$confdir/config
 
 [ -d $confsubdir ] || mkdir -p $confsubdir
-chmod go-rwx $confdir $confsubdir
 
 # Ugh!
 case "$BASH_VERSION" in
@@ -28,3 +27,5 @@ esac
 . $ZDOTDIR/lib/libhooks.sh
 
 rebuild_config "$config" "${confsubdir#$HOME/}"
+
+chmod go-rwx $confdir $confsubdir
