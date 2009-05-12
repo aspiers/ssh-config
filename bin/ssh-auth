@@ -35,7 +35,10 @@ if ! [ -e "$pubkey" ]; then
 fi
 
 for host in "$@"; do
-  ssh-copy-id -i "$pubkey" ${user+$user@}$host
+  # quotes around last argument are necessary to allow
+  # ssh-auth '-p 2263 root@localhost'
+  # see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=99785
+  ssh-copy-id -i "$pubkey" "${user+$user@}$host"
 done
 
 # echo "Appending following keys from $pubkey to remote $authkeys:"
