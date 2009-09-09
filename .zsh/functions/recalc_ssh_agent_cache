@@ -16,7 +16,7 @@ if (( $#pids > 1 )); then
   return 1
 fi
 
-SSH_AGENT_PID=$pids[0]
+SSH_AGENT_PID=$pids[1]
 
 if [[ "$SSH_AGENT_PID" != *[0-9]* ]]; then
   # If interactive, prompt whether to start a new one.
