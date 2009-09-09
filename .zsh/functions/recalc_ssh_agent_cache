@@ -153,14 +153,14 @@ fi
 
 if (( $#_matched_sockets != 1 )); then
   if (( $#_unknown_sockets == 1 && $#_dead_sockets == 0 )); then
-    echo "Only one unknowned socket $_unknown_sockets[0] and none dead; assuming it's matched."
-    : ${SSH_AUTH_SOCK:=$_unknown_sockets[0]}
+    echo "Only one unknowned socket $_unknown_sockets[1] and none dead; assuming it's matched."
+    : ${SSH_AUTH_SOCK:=$_unknown_sockets[1]}
   else
     echo "BUG?  Didn't find a unique matched socket" >&2
     return 1
   fi
 else
-  : ${SSH_AUTH_SOCK:=$_matched_sockets[0]}
+  : ${SSH_AUTH_SOCK:=$_matched_sockets[1]}
 fi
 
 write_ssh_agent_cache
