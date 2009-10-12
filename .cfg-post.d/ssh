@@ -6,25 +6,12 @@ config=$confdir/config
 
 [ -d $confsubdir ] || mkdir -p $confsubdir
 
-# Ugh!
-case "$BASH_VERSION" in
-  1*)
-    allow_null_glob_expansion=1
-    ;;
-  2*|3*)
-    shopt -s nullglob
-    ;;
-  *)
-    echo "Unknown \$BASH_VERSION $BASH_VERSION !  Aborting." >&2;
-    exit 1
-    ;;
-esac
-
+# source "$ZDOTDIR/.zsh/functions/enable_nullglob"
 # dirents=`echo $confsubdir/*`
 # [ -z "$dirents" ] && exit 0
 # echo "parts $dirents"
 
-. $ZDOTDIR/lib/libhooks.sh
+source "$ZDOTDIR/lib/libhooks.sh"
 
 rebuild_config "$config" "${confsubdir#$HOME/}"
 
