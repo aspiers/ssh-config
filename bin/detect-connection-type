@@ -10,7 +10,7 @@ use Sh qw(write_to_file);
 # many echo requests.
 my $MIN_SENT_PACKETS = 10;
 
-die unless $ENV{SSH_CONNECTION};
+die "\$SSH_CONNECTION not set\n" unless $ENV{SSH_CONNECTION};
 
 # Source is the server initiating the remote connection.
 # Destination is the server we are running this script on.
@@ -65,7 +65,7 @@ while (<PING>) {
     write_to_file("$dir/lost",  $replies_lost . "\n");
     write_to_file("$dir/lost%", $lost_percent . "\n");
     my $type = guess_connection_type($best, $lost_percent);
-    write_to_file("$dir/type",  $type . "\n");
+    write_to_file("$dir/guessed-type", $type . "\n");
   }
 
   # If the terminal closes, ensure we don't leave an orphaned ping process.
