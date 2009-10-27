@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+# We won't record any results until we receive at least this many echo
+# replies.
+my $MIN_PACKETS = 5;
+
+die unless $ENV{SSH_CONNECTION};
+
+# Source is the server initiating the remote connection.
+# Destination is the server we are running this script on.
+my ($src_IP, $src_port, $dst_IP, $dst_port)
+  = split /\s+/, $ENV{SSH_CONNECTION};
+
+my $dir = "$ENV{HOME}/.connection-type/$src_IP/$dst_IP";
+mkdir($dir) or die "mkdir($dir) failed: $!\n";
+
+open(PING, "ping $src_IP |")
+  or die "Couldn't open(ping $src_IP |): $!\n";
+my $replies_received = 0;
+my $replies_lost = 0;
+my $last_icmp_seq_received = 0;
+my $min = 999999999;
+my $max = 0;
+my $avg = -1;
+my $total = 0;
+while (<PING>) {
+  chomp;
+  next if /^PING/;
+  if (! /^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d) ttl=\d+ time=([\d.]+) ms/) {
+    die "Couldn't parse [$_]\n";
+  }
+  $replies_received++;
+  my ($seq, $time) = ($3, $4);
+
+  # This is a lower bound, since multiple replies could have been
+  # dropped since the last one was received, but we're not ping so we
+  # don't know how many it's sent at any given time.
+  $replies_lost += $seq - $last_icmp_seq_received - 1;
+  my $lost_percent = $replies_lost / $last_icmp_seq_received * 100;
+
+  $last_icmp_seq_received = $seq;
+  $min = $time if $time < $min;
+  $max = $time if $time > $max;
+  $total += $time;
+  $avg = $total / $replies_received;
+
+  printf "rtt min/avg/max = $min/$avg/$max, rcv=$replies_received, lost>=$replies_lost (%d%%)\n", $lost_percent;
+
+  last if $last_icmp_seq_received > $MIN_PACKETS;
+}
+close(PING)
+  or die "close(ping $src_IP |) failed: $!\n";
