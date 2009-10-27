@@ -9,6 +9,7 @@ use Sh qw(write_to_file);
 # We won't record any results until we know we've sent at least this
 # many echo requests.
 my $MIN_SENT_PACKETS = 10;
+my $MAX_SENT_PACKETS = 50;
 
 sub usage {
   warn @_, "\n" if @_;
@@ -68,7 +69,7 @@ while (<PING>) {
 #   printf "rtt best/avg/worst = %.1f/%.1f/%.1f rcv=%d lost >= %d (%d%%)\n",
 #     $best, $avg, $worst, $replies_received, $replies_lost, $lost_percent;
 
-  if ($last_icmp_seq_received >= $MIN_SENT_PACKETS) {
+  if ($min_sent >= $MIN_SENT_PACKETS) {
     write_to_file("$dir/best",  $best . "\n");
     write_to_file("$dir/avg",   $avg . "\n");
     write_to_file("$dir/worst", $worst . "\n");
@@ -82,6 +83,8 @@ while (<PING>) {
 
   # If the terminal closes, ensure we don't leave an orphaned ping process.
   last if ! -t 2;
+
+  last if $min_sent >= $MAX_SENT_PACKETS;
 }
 
 close(PING);
