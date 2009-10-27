@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Path;
+use Sh qw(write_to_file);
+
+die "\$SSH_CONNECTION not set\n" unless $ENV{SSH_CONNECTION};
+
+sub usage {
+  warn @_, "\n" if @_;
+
+  (my $ME = $0) =~ s,.*/,,;
+
+  die <<EOUSAGE;
+Usage: $ME TYPE [SRCHOST]
+EOUSAGE
+}
+
+usage() unless @ARGV >= 1 and @ARGV <= 2;
+
+my $type = $ARGV[0];
+
+# Source is the server initiating the remote connection.
+# Destination is the server we are running this script on.
+my ($src_IP, $src_port, $dst_IP, $dst_port)
+  = split /\s+/, $ENV{SSH_CONNECTION};
+$src_IP = $ARGV[1] if $ARGV[1];
+
+my $dir = "$ENV{HOME}/.connection-type/$src_IP/$dst_IP";
+mkpath($dir);
+
+write_to_file("$dir/type", $type . "\n");

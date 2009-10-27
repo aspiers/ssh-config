@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Sh qw(cat);
+
+sub usage {
+  warn @_, "\n" if @_;
+
+  (my $ME = $0) =~ s,.*/,,;
+
+  die <<EOUSAGE;
+Usage: $ME [SRCHOST]
+EOUSAGE
+}
+
+usage() if @ARGV > 1;
+
+die "\$SSH_CONNECTION not set\n" unless $ENV{SSH_CONNECTION};
+
+# Source is the server initiating the remote connection.
+# Destination is the server we are running this script on.
+my ($src_IP, $src_port, $dst_IP, $dst_port)
+  = split /\s+/, $ENV{SSH_CONNECTION};
+$src_IP = $ARGV[0] if @ARGV;
+
+my $dir = "$ENV{HOME}/.connection-type/$src_IP/$dst_IP";
+
+if (-e "$dir/type") {
+  print cat("$dir/type");
+  exit 0;
+}
+if (-e "$dir/guessed-type") {
+  print cat("$dir/guessed-type");
+  exit 0;
+}
+
+print "unknown\n";
+exit 1;
