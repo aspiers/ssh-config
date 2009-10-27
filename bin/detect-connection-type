@@ -3,9 +3,12 @@
 use strict;
 use warnings;
 
-# We won't record any results until we receive at least this many echo
-# replies.
-my $MIN_PACKETS = 5;
+use File::Path;
+use Sh qw(write_to_file);
+
+# We won't record any results until we know we've sent at least this
+# many echo requests.
+my $MIN_SENT_PACKETS = 10;
 
 die unless $ENV{SSH_CONNECTION};
 
@@ -13,23 +16,25 @@ die unless $ENV{SSH_CONNECTION};
 # Destination is the server we are running this script on.
 my ($src_IP, $src_port, $dst_IP, $dst_port)
   = split /\s+/, $ENV{SSH_CONNECTION};
+$src_IP = $ARGV[0] if @ARGV;
 
 my $dir = "$ENV{HOME}/.connection-type/$src_IP/$dst_IP";
-mkdir($dir) or die "mkdir($dir) failed: $!\n";
+mkpath($dir);
 
 open(PING, "ping $src_IP |")
   or die "Couldn't open(ping $src_IP |): $!\n";
 my $replies_received = 0;
 my $replies_lost = 0;
+my $min_sent = 0;
 my $last_icmp_seq_received = 0;
-my $min = 999999999;
-my $max = 0;
+my $best = 999999999;
+my $worst = 0;
 my $avg = -1;
 my $total = 0;
 while (<PING>) {
   chomp;
   next if /^PING/;
-  if (! /^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d) ttl=\d+ time=([\d.]+) ms/) {
+  if (! /^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
     die "Couldn't parse [$_]\n";
   }
   $replies_received++;
@@ -39,17 +44,40 @@ while (<PING>) {
   # dropped since the last one was received, but we're not ping so we
   # don't know how many it's sent at any given time.
   $replies_lost += $seq - $last_icmp_seq_received - 1;
-  my $lost_percent = $replies_lost / $last_icmp_seq_received * 100;
+  $min_sent = $seq;
+  my $lost_percent = $min_sent ? $replies_lost / $min_sent * 100 : 0;
 
   $last_icmp_seq_received = $seq;
-  $min = $time if $time < $min;
-  $max = $time if $time > $max;
+  $best = $time if $time < $best;
+  $worst = $time if $time > $worst;
   $total += $time;
   $avg = $total / $replies_received;
 
-  printf "rtt min/avg/max = $min/$avg/$max, rcv=$replies_received, lost>=$replies_lost (%d%%)\n", $lost_percent;
+#   printf "rtt best/avg/worst = %.1f/%.1f/%.1f rcv=%d lost >= %d (%d%%)\n",
+#     $best, $avg, $worst, $replies_received, $replies_lost, $lost_percent;
 
-  last if $last_icmp_seq_received > $MIN_PACKETS;
+  if ($last_icmp_seq_received >= $MIN_SENT_PACKETS) {
+    write_to_file("$dir/best",  $best . "\n");
+    write_to_file("$dir/avg",   $avg . "\n");
+    write_to_file("$dir/worst", $worst . "\n");
+    write_to_file("$dir/sent",  $min_sent . "\n");
+    write_to_file("$dir/recvd", $replies_received . "\n");
+    write_to_file("$dir/lost",  $replies_lost . "\n");
+    write_to_file("$dir/lost%", $lost_percent . "\n");
+    my $type = guess_connection_type($best, $lost_percent);
+    write_to_file("$dir/type",  $type . "\n");
+  }
+
+  # If the terminal closes, ensure we don't leave an orphaned ping process.
+  last if ! -t 2;
 }
-close(PING)
-  or die "close(ping $src_IP |) failed: $!\n";
+
+close(PING);
+
+sub guess_connection_type {
+  my ($best, $lost_percent) = @_;
+  return 'lan'  if $best < 1;
+  return 'wifi' if $best < 5;
+  return 'near' if $best < 30;
+  return 'far';
+}
