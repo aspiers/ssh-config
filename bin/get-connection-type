@@ -17,7 +17,10 @@ EOUSAGE
 
 usage() if @ARGV > 1;
 
-die "\$SSH_CONNECTION not set\n" unless $ENV{SSH_CONNECTION};
+if (! exists $ENV{SSH_CONNECTION}) {
+  print "local\n";
+  exit 0;
+}
 
 # Source is the server initiating the remote connection.
 # Destination is the server we are running this script on.
