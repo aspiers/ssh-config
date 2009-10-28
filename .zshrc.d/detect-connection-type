@@ -1,3 +1,4 @@
 #!/bin/zsh
 
-detect-connection-type &
+# Needs to be in a subshell to suppress job messages
+( detect-connection-type & )
