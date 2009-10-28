@@ -23,19 +23,22 @@ EOUSAGE
 
 usage() if @ARGV > 1;
 
-die "\$SSH_CONNECTION not set\n" unless $ENV{SSH_CONNECTION};
+unless ($ENV{SSH_CONNECTION}) {
+  #warn "\$SSH_CONNECTION not set\n";
+  exit 1;
+}
 
 # Source is the server initiating the remote connection.
 # Destination is the server we are running this script on.
-my ($src_IP, $src_port, $dst_IP, $dst_port)
+my ($src_host, $src_port, $dst_host, $dst_port)
   = split /\s+/, $ENV{SSH_CONNECTION};
-$src_IP = $ARGV[0] if @ARGV;
+$src_host = $ARGV[0] if @ARGV;
 
-my $dir = "$ENV{HOME}/.connection-type/$src_IP/$dst_IP";
+my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
 mkpath($dir);
 
-open(PING, "ping $src_IP |")
-  or die "Couldn't open(ping $src_IP |): $!\n";
+open(PING, "ping $src_host |")
+  or die "Couldn't open(ping $src_host |): $!\n";
 my $replies_received = 0;
 my $replies_lost = 0;
 my $min_sent = 0;
