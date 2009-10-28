@@ -1,7 +1,8 @@
 #!/bin/sh
 
 case "`get-connection-type`" in
-    lan|wifi)
+#    lan|wifi)
+    lan)
         exit 0 ;;
     *)
         exit 1 ;;
