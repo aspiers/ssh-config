@@ -37,7 +37,7 @@ $src_host = $ARGV[0] if @ARGV;
 my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
 mkpath($dir);
 
-open(PING, "ping $src_host |")
+my $ping_pid = open(PING, "ping $src_host |")
   or die "Couldn't open(ping $src_host |): $!\n";
 my $replies_received = 0;
 my $replies_lost = 0;
@@ -90,6 +90,7 @@ while (<PING>) {
   last if $min_sent >= $MAX_SENT_PACKETS;
 }
 
+#kill 15, $ping_pid or kill 9, $ping_pid;
 close(PING);
 
 sub guess_connection_type {
