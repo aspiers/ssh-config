@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
+use Net::Domain qw(hostfqdn);
 use Sh qw(cat);
+use Socket;
 
 sub usage {
   warn @_, "\n" if @_;
@@ -17,16 +19,23 @@ EOUSAGE
 
 usage() if @ARGV > 1;
 
-if (! exists $ENV{SSH_CONNECTION}) {
-  print "local\n";
-  exit 0;
+my ($src_IP, $src_port, $dst_IP, $dst_port);
+if (@ARGV) {
+  $src_IP = $ARGV[0];
+  $dst_IP = inet_ntoa(scalar gethostbyname hostfqdn());
 }
-
-# Source is the server initiating the remote connection.
-# Destination is the server we are running this script on.
-my ($src_IP, $src_port, $dst_IP, $dst_port)
-  = split /\s+/, $ENV{SSH_CONNECTION};
-$src_IP = $ARGV[0] if @ARGV;
+else {
+  if (exists $ENV{SSH_CONNECTION}) {
+    # Source is the server initiating the remote connection.
+    # Destination is the server we are running this script on.
+    ($src_IP, $src_port, $dst_IP, $dst_port)
+      = split /\s+/, $ENV{SSH_CONNECTION};
+  }
+  else {
+    print "local\n";
+    exit 0;
+  }
+}
 
 my $dir = "$ENV{HOME}/.connection-type/$src_IP/$dst_IP";
 
