@@ -28,6 +28,8 @@ unless ($ENV{SSH_CONNECTION}) {
   exit 1;
 }
 
+$ENV{SSH_CONNECTION} =~ s/::ffff://g; # RHEL4 weirdness seen on db9
+
 # Source is the server initiating the remote connection.
 # Destination is the server we are running this script on.
 my ($src_host, $src_port, $dst_host, $dst_port)
