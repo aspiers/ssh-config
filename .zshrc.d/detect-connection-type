@@ -2,6 +2,6 @@
 
 # Needs to be in a subshell to suppress job messages
 (
-    [ "`get-connection-type`" = 'unknown' ] &&
-    detect-connection-type -vvv </dev/null >| ~/.detect-connection-type.log
+#    [ "`get-connection-type`" = 'unknown' ] &&
+    detect-connection-type -vvv </dev/null >&| ~/.detect-connection-type.log
 ) &!
