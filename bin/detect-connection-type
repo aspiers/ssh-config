@@ -107,10 +107,10 @@ while (1) {
     debug(2, "at least $MAX_SENT_PACKETS packets sent; exiting");
     last;
   }
-  if (time() - $last_tty_check > $TTY_CHECK_EVERY) {
-    debug(2, "tty " . `tty`);
-    $last_tty_check = time();
-  }
+#   if (time() - $last_tty_check > $TTY_CHECK_EVERY) {
+#     debug(2, "tty " . `tty`);
+#     $last_tty_check = time();
+#   }
   if (time() - $start_time > $DEADLINE) {
     debug(2, "deadline of $DEADLINE secs expired");
     finish(1);
