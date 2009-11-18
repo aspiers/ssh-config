@@ -59,6 +59,7 @@ my $total = 0;
 while (<PING>) {
   chomp;
   next if /^PING/;
+  next unless length($_); # required for when ping deadline expires
   if (! /^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
     die "Couldn't parse [$_]\n";
   }
