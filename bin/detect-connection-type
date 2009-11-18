@@ -9,7 +9,9 @@ use Sh qw(write_to_file);
 # We won't record any results until we know we've sent at least this
 # many echo requests.
 my $MIN_SENT_PACKETS = 10;
-my $MAX_SENT_PACKETS = 50;
+my $MAX_SENT_PACKETS = 30;
+my $DEADLINE         = 30; # we need this in case a firewall results
+                           # in zero replies
 
 sub usage {
   warn @_, "\n" if @_;
@@ -44,7 +46,7 @@ my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
 
 mkpath($dir);
 
-my $ping_pid = open(PING, "ping $src_host |")
+my $ping_pid = open(PING, "ping -w $DEADLINE $src_host |")
   or die "Couldn't open(ping $src_host |): $!\n";
 my $replies_received = 0;
 my $replies_lost = 0;
