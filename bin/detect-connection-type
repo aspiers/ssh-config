@@ -59,9 +59,13 @@ my $total = 0;
 while (<PING>) {
   chomp;
   next if /^PING/;
-  next unless length($_); # required for when ping deadline expires
+
+  # required for when ping deadline expires
+  next unless length($_);
+  next if /ping statistics|packets transmitted|^rtt /;
+
   if (! /^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
-    die "Couldn't parse [$_]\n";
+    warn "Couldn't parse [$_]\n";
   }
   $replies_received++;
   my ($seq, $time) = ($3, $4);
