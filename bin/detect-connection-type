@@ -163,8 +163,10 @@ sub handle_echo_reply {
   $total += $time;
   $avg = $total / $replies_received;
 
-#   printf "rtt best/avg/worst = %.1f/%.1f/%.1f rcv=%d lost >= %d (%d%%)\n",
-#     $best, $avg, $worst, $replies_received, $replies_lost, $lost_percent;
+  debug(2,
+        sprintf("rtt best/avg/worst = %.1f/%.1f/%.1f rcv=%d lost >= %d (%d%%)\n",
+                $best, $avg, $worst, $replies_received, $replies_lost, $lost_percent)
+  );
 
   if ($min_sent >= $MIN_SENT_PACKETS) {
     write_to_file("$dir/best",  $best . "\n");
