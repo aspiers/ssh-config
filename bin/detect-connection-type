@@ -37,6 +37,7 @@ my ($src_host, $src_port, $dst_host, $dst_port)
 $src_host = $ARGV[0] if @ARGV;
 
 my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
+-f "$dir/guessed-type" and exit 0;
 mkpath($dir);
 
 my $ping_pid = open(PING, "ping $src_host |")
