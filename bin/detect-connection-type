@@ -63,6 +63,9 @@ my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
 
 mkpath($dir);
 
+# facilitate nohup
+close(STDIN);
+
 $| = 1;
 my $ping_cmd = "ping $src_host";
 #my $ping_cmd = "ping -w $DEADLINE $src_host";
@@ -81,7 +84,9 @@ my $total = 0;
 
 my $select = new IO::Select($ping);
 my $queue;
+my $start_time = time();
 my $last_tty_check = time();
+
 while (1) {
   my @ready = $select->can_read($SELECT_TIMEOUT);
   debug(5, "select returned");
@@ -98,23 +103,29 @@ while (1) {
     }
   }
 
-  # If the terminal closes, ensure we don't leave an orphaned ping process.
-  if (! -t 2) {
-    debug(2, "STDERR no longer a tty");
-    last;
-  }
   if ($min_sent >= $MAX_SENT_PACKETS) {
     debug(2, "at least $MAX_SENT_PACKETS packets sent; exiting");
     last;
   }
-#   if (time() - $last_tty_check > $TTY_CHECK_EVERY) {
-#     debug(2, "tty " . `tty`);
-#     $last_tty_check = time();
-#   }
+  if (time() - $last_tty_check > $TTY_CHECK_EVERY) {
+    debug(2, "tty " . `tty`);
+    $last_tty_check = time();
+  }
+  if (time() - $start_time > $DEADLINE) {
+    debug(2, "deadline of $DEADLINE secs expired");
+    finish(1);
+  }
 }
 
-#kill 15, $ping_pid or kill 9, $ping_pid;
-close($ping);
+finish(0);
+
+sub finish {
+  my ($exit_code) = @_;
+  debug(3, "about to close\n");
+  kill 15, $ping_pid or kill 9, $ping_pid;
+  close($ping);
+  exit defined $exit_code ? $exit_code : 0;
+}
 
 sub handle_output {
   $_ = shift @_;
