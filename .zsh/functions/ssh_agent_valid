@@ -10,9 +10,10 @@ if ( ! true ); then
 #   return 0
 fi
 
-if [[ -z "$SSH_AGENT_PID" ]]; then
-  echo '$SSH_AGENT_PID not set.'
-  return 1
+if ! [[ -e /proc ]]; then
+  echo "/proc didn't exist!"
+  echo $giveup
+  return 0
 fi
 
 if [[ -z "$SSH_AUTH_SOCK" ]]; then
@@ -20,10 +21,28 @@ if [[ -z "$SSH_AUTH_SOCK" ]]; then
   return 1
 fi
 
-if ! [[ -e /proc ]]; then
-  echo "/proc didn't exist!"
-  echo $giveup
-  return 0
+sockpid="${SSH_AUTH_SOCK##*/agent.}"
+if [[ "$sockpid" == "$SSH_AUTH_SOCK" ]]; then
+  echo "Couldn't extract pid from \$SSH_AUTH_SOCK ($SSH_AUTH_SOCK)"
+  return 1
+fi
+
+if [[ -z "$SSH_AGENT_PID" ]]; then
+  # SSH_AGENT_PID not set, but could be due to forwarded agent
+  # which only sets SSH_AUTH_SOCK.  In this case, the pid should
+  # point to an sshd process.
+  if [[ ! -e /proc/$sockpid ]]; then
+    echo "\$SSH_AUTH_SOCK ($SSH_AUTH_SOCK) refers to non-existent process"
+    return 1
+  fi
+
+  grep -q sshd: /proc/$sockpid/cmdline
+  return $?
+fi
+
+if [[ "$sockpid" != "$SSH_AGENT_PID" ]]; then
+  echo "\$SSH_AGENT_PID ($SSH_AGENT_PID) does not match pid from \$SSH_AUTH_SOCK ($SSH_AUTH_SOCK)"
+  return 1
 fi
 
 if [[ ! -e /proc/$SSH_AGENT_PID ]]; then
