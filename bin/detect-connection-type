@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use File::Path;
+use Getopt::Long;
+use IO::Select;
 use Sh qw(write_to_file);
 
 # We won't record any results until we know we've sent at least this
@@ -12,6 +14,16 @@ my $MIN_SENT_PACKETS = 10;
 my $MAX_SENT_PACKETS = 30;
 my $DEADLINE         = 30; # we need this in case a firewall results
                            # in zero replies
+my $SELECT_TIMEOUT   = 0.5;
+
+my %opts = ( verbosity => 1 );
+
+Getopt::Long::Configure('bundling');
+GetOptions(
+  \%opts,
+  'help|h',
+  'verbosity|verbose|v:+',
+) or usage();
 
 sub usage {
   warn @_, "\n" if @_;
@@ -19,11 +31,15 @@ sub usage {
   (my $ME = $0) =~ s,.*/,,;
 
   die <<EOUSAGE;
-Usage: $ME [SRCHOST]
+Usage: $ME [options] [SRCHOST]
+Options:
+  -h, --help           Show this help
+  -v, --verbose[=N]    Increase [specify] verbosity (defaults to 1)
+  -V, --version        Show version
 EOUSAGE
 }
 
-usage() if @ARGV > 1;
+usage() if @ARGV > 1 or $opts{help};
 
 unless ($ENV{SSH_CONNECTION}) {
   #warn "\$SSH_CONNECTION not set\n";
@@ -46,7 +62,12 @@ my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
 
 mkpath($dir);
 
-my $ping_pid = open(PING, "ping -w $DEADLINE $src_host |")
+$| = 1;
+my $ping_cmd = "ping $src_host";
+#my $ping_cmd = "ping -w $DEADLINE $src_host";
+debug(2, "Running $ping_cmd");
+my $ping;
+my $ping_pid = open($ping, "$ping_cmd |")
   or die "Couldn't open(ping $src_host |): $!\n";
 my $replies_received = 0;
 my $replies_lost = 0;
@@ -56,17 +77,54 @@ my $best = 999999999;
 my $worst = 0;
 my $avg = -1;
 my $total = 0;
-while (<PING>) {
+
+my $select = new IO::Select($ping);
+my $queue;
+while (1) {
+  my @ready = $select->can_read($SELECT_TIMEOUT);
+  debug(5, "select returned");
+  if (@ready) {
+    my $fh = $ready[0];
+    my $incoming;
+    my $out = sysread $fh, $incoming, 1024;
+    debug(4, "received [$incoming]");
+    $queue .= $incoming;
+    debug(4, "queue now [$queue]");
+    while ($queue =~ s/(.*?)\n//) {
+      handle_output($1);
+      debug(4, "queue after handling [$queue]");
+    }
+  }
+
+  # If the terminal closes, ensure we don't leave an orphaned ping process.
+  last if ! -t 2;
+
+  last if $min_sent >= $MAX_SENT_PACKETS;
+}
+
+#kill 15, $ping_pid or kill 9, $ping_pid;
+close($ping);
+
+sub handle_output {
+  $_ = shift @_;
+  debug(3, "got ping output [$_]");
+
   chomp;
-  next if /^PING/;
+  return if /^PING/;
 
   # required for when ping deadline expires
-  next unless length($_);
-  next if /ping statistics|packets transmitted|^rtt /;
+  return unless length($_);
+  return if /ping statistics|packets transmitted|^rtt /;
 
-  if (! /^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
+  if (/^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
+    handle_echo_reply();
+  }
+  else {
     warn "Couldn't parse [$_]\n";
   }
+}
+
+sub handle_echo_reply {
   $replies_received++;
   my ($seq, $time) = ($3, $4);
 
@@ -97,15 +155,7 @@ while (<PING>) {
     my $type = guess_connection_type($best, $lost_percent);
     write_to_file("$dir/guessed-type", $type . "\n");
   }
-
-  # If the terminal closes, ensure we don't leave an orphaned ping process.
-  last if ! -t 2;
-
-  last if $min_sent >= $MAX_SENT_PACKETS;
 }
-
-#kill 15, $ping_pid or kill 9, $ping_pid;
-close(PING);
 
 sub guess_connection_type {
   my ($best, $lost_percent) = @_;
@@ -113,4 +163,9 @@ sub guess_connection_type {
   return 'wifi' if $best < 5;
   return 'near' if $best < 30;
   return 'far';
+}
+
+sub debug {
+  my $level = shift;
+  warn @_, "\n" if $opts{verbosity} >= $level;
 }
