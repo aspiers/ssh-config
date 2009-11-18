@@ -15,6 +15,7 @@ my $MAX_SENT_PACKETS = 30;
 my $DEADLINE         = 30; # we need this in case a firewall results
                            # in zero replies
 my $SELECT_TIMEOUT   = 0.5;
+my $TTY_CHECK_EVERY  = 5;  # check tty every N seconds
 
 my %opts = ( verbosity => 1 );
 
@@ -80,6 +81,7 @@ my $total = 0;
 
 my $select = new IO::Select($ping);
 my $queue;
+my $last_tty_check = time();
 while (1) {
   my @ready = $select->can_read($SELECT_TIMEOUT);
   debug(5, "select returned");
@@ -97,9 +99,18 @@ while (1) {
   }
 
   # If the terminal closes, ensure we don't leave an orphaned ping process.
-  last if ! -t 2;
-
-  last if $min_sent >= $MAX_SENT_PACKETS;
+  if (! -t 2) {
+    debug(2, "STDERR no longer a tty");
+    last;
+  }
+  if ($min_sent >= $MAX_SENT_PACKETS) {
+    debug(2, "at least $MAX_SENT_PACKETS packets sent; exiting");
+    last;
+  }
+#   if (time() - $last_tty_check > $TTY_CHECK_EVERY) {
+#     debug(2, "tty " . `tty`);
+#     $last_tty_check = time();
+#   }
 }
 
 #kill 15, $ping_pid or kill 9, $ping_pid;
