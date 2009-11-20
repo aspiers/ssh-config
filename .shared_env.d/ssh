@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Most Linux distributions seem to have AcceptEnv LC_TELEPHONE in
+# /etc/ssh/sshd_config, so we can "tunnel" the environment values we
+# want to pass over ssh through this to avoid having to reconfigure
+# sshd_config everywhere, via:
+#
+#   export LC_TELEPHONE="${LC_TELEPHONE}^^SSH_ORIG_CLIENT=1.2.3.4"
+#   ssh -o SendEnv=LC_TELEPHONE...
+#
+# Update: results in an error, since /etc/profile runs manpath -q before
+# we can restore LC_TELEPHONE :-(
+case "$LC_TELEPHONE" in
+    *^^*)
+        eval "${LC_TELEPHONE#*^^}"
+        LC_TELEPHONE="${LC_TELEPHONE%^^*}" # just in case anything cares
+        if [ -z "$LC_TELEPHONE" ]; then
+            unset LC_TELEPHONE
+        fi
+        ;;
+esac

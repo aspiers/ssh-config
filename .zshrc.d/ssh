@@ -10,15 +10,16 @@ ssh () {
 
     if [ -n "$SSH_ORIG_CLIENT" ]; then
         # see ~/.shared_rc.d/ssh
-        export LC_TELEPHONE_ORIG="${LC_TELEPHONE}"
-        export LC_TELEPHONE="${LC_TELEPHONE}^^export SSH_ORIG_CLIENT=${SSH_ORIG_CLIENT}"
-        sshargs="-o SendEnv=LC_TELEPHONE"
+        # export LC_TELEPHONE_ORIG="${LC_TELEPHONE}"
+        # export LC_TELEPHONE="${LC_TELEPHONE}^^export SSH_ORIG_CLIENT=${SSH_ORIG_CLIENT}"
+        # sshargs="-o SendEnv=LC_TELEPHONE"
+        sshargs="-o SendEnv=SSH_ORIG_CLIENT"
     fi
 
     command ssh $sshargs "$@"
 
-    if [ -n "$SSH_ORIG_CLIENT" ]; then
-        LC_TELEPHONE="${LC_TELEPHONE_ORIG}"
-    fi
+    # if [ -n "$SSH_ORIG_CLIENT" ]; then
+    #     LC_TELEPHONE="${LC_TELEPHONE_ORIG}"
+    # fi
 }
 
