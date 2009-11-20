@@ -26,7 +26,9 @@ if [ -z "$SSH_ORIG_CLIENT" ]; then
         export SSH_ORIG_CLIENT="${SSH_CLIENT%% *}"
     else
         # We're not using ssh at all.
+        :
     fi
 else
     # Server side of seconder or greater hop.
+    :
 fi
