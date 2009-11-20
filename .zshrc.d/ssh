@@ -10,7 +10,7 @@ ssh () {
 
   if [ -n "$SSH_ORIG_CLIENT" ]; then
       # see ~/.shared_rc.d/ssh
-      export LC_TELEPHONE="${LC_TELEPHONE}^^SSH_ORIG_CLIENT=${SSH_ORIG_CLIENT}"
+      export LC_TELEPHONE="${LC_TELEPHONE}^^export SSH_ORIG_CLIENT=${SSH_ORIG_CLIENT}"
       sshargs="-o SendEnv=LC_TELEPHONE"
   fi
 
