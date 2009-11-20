@@ -23,7 +23,7 @@ if [ -z "$SSH_ORIG_CLIENT" ]; then
     # Not passed via tunnelling hack above ...
     if [ -n "$SSH_CLIENT" ]; then
         # This is (hopefully) the server side of the first hop.
-        export SSH_ORIG_CLIENT="${SSH_CLIENT% *}"
+        export SSH_ORIG_CLIENT="${SSH_CLIENT%% *}"
     else
         # We're not using ssh at all.
     fi
