@@ -40,11 +40,6 @@ if [[ -z "$SSH_AGENT_PID" ]]; then
   return $?
 fi
 
-if [[ "$sockpid" != "$SSH_AGENT_PID" ]]; then
-  echo "\$SSH_AGENT_PID ($SSH_AGENT_PID) does not match pid from \$SSH_AUTH_SOCK ($SSH_AUTH_SOCK)"
-  return 1
-fi
-
 if [[ ! -e /proc/$SSH_AGENT_PID ]]; then
   echo "\$SSH_AGENT_PID set to non-existent pid ($SSH_AGENT_PID)."
   return 1
