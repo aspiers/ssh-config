@@ -58,6 +58,10 @@ else
   : echo "Found agent $agentbin"
 fi
 
+# If ssh-agent pid Y is started by gnome-session (say) with pid X then
+# Y's parent is X, SSH_AGENT_PID refers to pid Y, and the suffix of
+# the /tmp/ssh-XXXXXX/agent.XXXX socket is pid X (the parent).
+
 agent_parent_pid=$( awk '{print $4}' /proc/$SSH_AGENT_PID/stat )
 if [[ "$agent_parent_pid" == 1 ]]; then
   guessed_agent_parent_pid=$(( SSH_AGENT_PID - 1 ))
@@ -72,9 +76,17 @@ for socket in "${_sockets[@]}"; do
 
   _lsof="`lsof $socket`"
   if [[ -n "$_lsof" ]]; then
-    #if ! [[ -g "$agentbin" ]]; then
-    if [[ "$USERNAME" != root ]]; then
-      cat <<'EOF' >&2
+    if [[ "$_lsof" == *sshd* ]]; then
+      # Can this ever happen, now that we changed the pid detection
+      # from using ps | grep technique to using pidof?
+      _socket_status=fwd
+    elif [[ "$_lsof" == *ssh/master-* ]]; then
+      _socket_status=fwd # shared connection
+    elif [[ "$_lsof" == *ssh-agent* ]]; then
+      _socket_status=matched
+      #if ! [[ -g "$agentbin" ]]; then
+      if [[ "$USERNAME" != root ]]; then
+        cat <<'EOF' >&2
 *** WARNING! ***
 
 It looks like ssh-agent is neither setgid nor explicitly does
@@ -86,14 +98,7 @@ insecure ssh-agent running.  Please fix.  For more info, see:
 
 EOF
 #      return 1
-    fi
- 
-    if [[ "$_lsof" == *sshd* ]]; then
-      # Can this ever happen, now that we changed the pid detection
-      # from using ps | grep technique to using pidof?
-      _socket_status=fwd
-    elif [[ "$_lsof" == *ssh-agent* ]]; then
-      _socket_status=matched
+      fi
     else
       echo "BUG? weird lsof output:\n$_lsof" >&2
       return 1
@@ -160,6 +165,7 @@ if (( $#_matched_sockets != 1 )); then
     return 1
   fi
 else
+  echo "Choosing first of matched sockets: $_matched_sockets"
   : ${SSH_AUTH_SOCK:=$_matched_sockets[1]}
 fi
 
