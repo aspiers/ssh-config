@@ -56,12 +56,19 @@ my ($src_host, $src_port, $dst_host, $dst_port)
 $src_host = $ARGV[0] if @ARGV;
 
 my $dir = "$ENV{HOME}/.connection-type/$src_host/$dst_host";
+my $lock = "$dir/lock";
+my $got_lock;
 
 # Better for the caller to decide whether or not detection should
 # occur if a guess was previously made.
 #-f "$dir/guessed-type" and exit 0;
 
 mkpath($dir);
+if (! symlink "pid-$$", $lock) {
+  debug(1, "$dir already locked; aborting");
+  exit 1;
+}
+$got_lock = 1;
 
 # facilitate nohup
 close(STDIN);
@@ -192,4 +199,8 @@ sub guess_connection_type {
 sub debug {
   my $level = shift;
   warn @_, "\n" if $opts{verbosity} >= $level;
+}
+
+END {
+  $got_lock and unlink $lock;
 }
