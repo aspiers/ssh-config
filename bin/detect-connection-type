@@ -64,11 +64,12 @@ my $got_lock;
 #-f "$dir/guessed-type" and exit 0;
 
 mkpath($dir);
-if (! symlink "pid-$$", $lock) {
-  debug(1, "$dir already locked; aborting");
+
+$SIG{INT} = $SIG{TERM} = $SIG{QUIT} = $SIG{KILL} = $SIG{__DIE__} = sub {
+  cleanup();
   exit 1;
-}
-$got_lock = 1;
+};
+acquire_lock();
 
 # facilitate nohup
 close(STDIN);
@@ -171,7 +172,7 @@ sub handle_echo_reply {
   $avg = $total / $replies_received;
 
   debug(2,
-        sprintf("rtt best/avg/worst = %.1f/%.1f/%.1f rcv=%d lost >= %d (%d%%)\n",
+        sprintf("rtt best/avg/worst = %.1f/%.1f/%.1f rcv=%d lost >= %d (%d%%)",
                 $best, $avg, $worst, $replies_received, $replies_lost, $lost_percent)
   );
 
@@ -202,5 +203,25 @@ sub debug {
 }
 
 END {
-  $got_lock and unlink $lock;
+  cleanup();
+}
+
+sub acquire_lock {
+  if (! symlink "pid-$$", $lock) {
+    debug(1, "$dir already locked; aborting");
+    exit 1;
+  }
+  $got_lock = 1;
+}
+
+sub cleanup {
+  warn $@ if $@;
+  if ($got_lock) {
+    if (unlink $lock) {
+      $got_lock = 0;
+    }
+    else {
+      warn "Couldn't remove lock $lock!"
+    }
+  }
 }
