@@ -186,6 +186,7 @@ sub handle_echo_reply {
     write_to_file("$dir/lost%", $lost_percent . "\n");
     my $type = guess_connection_type($best, $lost_percent);
     write_to_file("$dir/guessed-type", $type . "\n");
+    debug(2, "guessed connection type as $type");
   }
 }
 
