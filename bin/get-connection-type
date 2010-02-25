@@ -18,6 +18,7 @@ sub usage {
 
   die <<EOUSAGE;
 Usage: $ME [SRCHOST]
+Gets the type of connection from SRCHOST to this host.
 EOUSAGE
 }
 
