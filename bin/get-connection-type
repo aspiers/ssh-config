@@ -43,6 +43,9 @@ else {
   if (exists $ENV{SSH_CONNECTION}) {
     # Source is the server initiating the remote connection.
     # Destination is the server we are running this script on.
+    #
+    # FIXME!  Attaching to a remote server's screen session
+    # foils this logic.
     ($src_IP, $src_port, $dst_IP, $dst_port)
       = split /\s+/, $ENV{SSH_CONNECTION};
   }
