@@ -1,6 +1,8 @@
 #!/bin/zsh
 
-ssh () {
+# See ~/.shared_env.d/ssh
+
+ssh2 () {
     setopt local_traps
     trap 'cxx' INT EXIT QUIT KILL
     dsa
