@@ -2,7 +2,7 @@
 
 # See ~/.shared_env.d/ssh
 
-ssh2 () {
+ssh () {
     setopt local_traps
     trap 'cxx' INT EXIT QUIT KILL
     dsa
@@ -10,6 +10,10 @@ ssh2 () {
     # Finally, strip off .* domain component, if any.
     cx "${${${(M@)argv:#*@*}:-$1}%%.[a-z]*}" 
 
+    command ssh $sshargs "$@"
+}
+
+ssh2 () {
     if [ -n "$SSH_ORIG_CLIENT" ]; then
         # see ~/.shared_rc.d/ssh
         export LC_TELEPHONE_ORIG="${LC_TELEPHONE}"
@@ -18,7 +22,7 @@ ssh2 () {
         #sshargs="-o SendEnv=SSH_ORIG_CLIENT"
     fi
 
-    command ssh $sshargs "$@"
+    ssh "$@"
 
     if [ "$+LC_TELEPHONE_ORIG" = 1 ]; then
         LC_TELEPHONE="${LC_TELEPHONE_ORIG}"
