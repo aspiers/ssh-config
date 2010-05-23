@@ -17,7 +17,11 @@ sub usage {
   (my $ME = $0) =~ s,.*/,,;
 
   die <<EOUSAGE;
-Usage: $ME [SRCHOST]
+Usage: $ME [options] [SRCHOST]
+Options:
+  -v, --verbose      (can be repeated)
+      --verbosity=N
+
 Gets the type of connection from SRCHOST to this host.
 EOUSAGE
 }
