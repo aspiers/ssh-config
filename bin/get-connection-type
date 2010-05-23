@@ -39,9 +39,13 @@ if (@ARGV) {
   $src_IP = $ARGV[0];
 
   # inet_ntoa(scalar gethostbyname $fqdn) can return 127.0.0.2 :-(
-  my $fqdn = hostfqdn();
-  ($dst_IP) = `host $fqdn` =~ /has address (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
-  die "Couldn't determine dest IP via 'host $fqdn'" unless $dst_IP;
+  # my $fqdn = hostfqdn();
+  # ($dst_IP) = `host $fqdn` =~ /has address (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
+  # die "Couldn't determine dest IP via 'host $fqdn'" unless $dst_IP;
+
+  # DNS entry for hostname doesn't necessarily reflect real IP.
+  ($dst_IP) = `gw-dev-IP` =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
+  die "Couldn't determine dest IP via gw-dev-IP" unless $dst_IP;
 }
 else {
   if (exists $ENV{SSH_CONNECTION}) {
