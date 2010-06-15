@@ -9,6 +9,11 @@ if [ "$1" = '-1' ]; then
   shift
 fi
 
+if [ "$1" = '-d' ]; then
+  pubkey=$HOME/.ssh/id_dsa.pub
+  shift
+fi
+
 if [ "$1" = '-l' ]; then
   user=$2
   shift; shift
@@ -21,6 +26,7 @@ usage () {
 Usage: $me [options] [USER@]HOST
 Options:
   -1   Use old ssh v1 keys
+  -d   Use DSA key
 EOF
   exit 1
 }
@@ -31,7 +37,7 @@ fi
 
 if ! [ -e "$pubkey" ]; then
   echo "$pubkey doesn't exist; aborting." >&2
-  exit 1
+  usage
 fi
 
 for host in "$@"; do
