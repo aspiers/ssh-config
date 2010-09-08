@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export PERL5LIB=$HOME/lib/perl5
+
 case "`get-connection-type`" in
     local|lan)
         exit 0 ;;
