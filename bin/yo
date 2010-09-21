@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# no exec so it works via source
-ssh adam@adamspiers.dyndns.org "$@"
