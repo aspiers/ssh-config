@@ -1,0 +1,14 @@
+#!/bin/bash
+
+me=`basename $0`
+
+if [ -z "$DISPLAY" ]; then
+    echo "ERROR: $me: \$DISPLAY not set" >&2
+    exit 1
+fi
+
+ssh_display_num="${DISPLAY%.0}"
+ssh_display_num="${ssh_display_num#localhost}"
+# should now be something like ":10"
+
+xauth -f ~/.Xauthority list "${HOSTNAME:-`hostname`}/unix${ssh_display_num}"

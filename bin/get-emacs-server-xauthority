@@ -1,0 +1,21 @@
+#!/bin/sh
+
+emacsclient --eval '(getenv "XAUTHORITY")' | sed 's/^"\(.\+\)"$/\1/g'
+
+exit $?
+
+myuid=`id -u`
+
+if ! emacs_pid=`pgrep -x -u $myuid emacs`; then
+    echo "pgrep failed to find emacs process for uid $myuid" >&2
+    exit 1
+fi
+
+echo "emacs is pid $emacs_pid"
+
+if ! [ -e "/proc/$emacs_pid" ]; then
+    echo "ERROR: /proc/$emacs_pid didn't exist" >&2
+    exit 1
+fi
+
+perl -0l012ne '/XAUTHORITY=(.+)/ && print $1' /proc/$emacs_pid/environ

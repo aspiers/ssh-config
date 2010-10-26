@@ -1,0 +1,4 @@
+#!/bin/sh
+
+
+xauth -f `get-emacs-server-xauthority` add `get-spoofed-ssh-xauth-key`
