@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Output the location of the xauthority file currently being used
+# by the running emacs server.  This file is used when executing
+# `make-frame-on-display', and so needs to contain a valid X cookie
+# for the display passed as a parameter to that function.  This
+# is taken care of by the xauth-emacs command.
+
 emacsclient --eval '(getenv "XAUTHORITY")' | sed 's/^"\(.\+\)"$/\1/g'
 
 exit $?
