@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
-
-xauth -f `get-emacs-server-xauthority` add `get-spoofed-ssh-xauth-key`
+if xauthority=`get-emacs-server-xauthority 2>&1`; then
+    xauth -f "$xauthority" add `get-spoofed-ssh-xauth-key`
+# else
+#     echo "Failed to detect emacs server's xauthority file"
+fi
