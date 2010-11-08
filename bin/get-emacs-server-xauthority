@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Output the location of the xauthority file currently being used
 # by the running emacs server.  This file is used when executing
@@ -6,7 +6,13 @@
 # for the display passed as a parameter to that function.  This
 # is taken care of by the xauth-emacs command.
 
-emacsclient --eval '(getenv "XAUTHORITY")' | sed 's/^"\(.\+\)"$/\1/g'
+xauthority=$( emacsclient --eval '(getenv "XAUTHORITY")' 2>&1 )
+case "$xauthority" in
+    *"can't find socket"*|'')
+        exit 1 ;;
+esac
+
+echo "$xauthority" | sed 's/^"\(.\+\)"$/\1/g'
 
 exit $?
 
