@@ -7,16 +7,21 @@ export SSH_AUTH_SOCK=
 
 echo "Recalculating ssh-agent info ..."
 
-local pids
-pids=( `pgrep -u $USER ssh-agent` )
+if [[ -n "$1" ]]; then
+   SSH_AGENT_PID="$1"
+else
+    local pids
+    pids=( `pgrep -u $USER ssh-agent` )
 
-if (( $#pids > 1 )); then
-  echo "$#pids pids found ($pids); aborting."
-  echo "Please ensure only one agent is running."
-  return 1
+    if (( $#pids > 1 )); then
+        echo "$#pids pids found ($pids); aborting."
+        echo "Please ensure only one agent is running."
+        return 1
+    fi
+
+    SSH_AGENT_PID=$pids[1]
 fi
 
-SSH_AGENT_PID=$pids[1]
 
 if [[ "$SSH_AGENT_PID" != *[0-9]* ]]; then
   # If interactive, prompt whether to start a new one.
