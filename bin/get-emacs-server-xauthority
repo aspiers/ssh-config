@@ -6,9 +6,10 @@
 # for the display passed as a parameter to that function.  This
 # is taken care of by the xauth-emacs command.
 
-xauthority=$( emacsclient --eval '(getenv "XAUTHORITY")' 2>&1 )
+xauthority=$( emacsclient --eval '(getenv "XAUTHORITY")' 2>&1 ) || exit $?
+
 case "$xauthority" in
-    *"can't find socket"*|'')
+    *"can't find socket"*|*"Connection refused"*|'')
         exit 1 ;;
 esac
 
