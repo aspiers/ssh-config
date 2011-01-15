@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 authkeys=.ssh/authorized_keys
 
