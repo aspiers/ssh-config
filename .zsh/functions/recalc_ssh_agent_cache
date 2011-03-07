@@ -91,7 +91,7 @@ for socket in "${_sockets[@]}"; do
       _socket_status=matched
       #if ! [[ -g "$agentbin" ]]; then
       if [[ "$USERNAME" != root ]]; then
-        cat <<'EOF' >&2
+        cat <<EOF >&2
 *** WARNING! ***
 
 It looks like ssh-agent is neither setgid nor explicitly does
