@@ -79,7 +79,7 @@ fi
 for socket in "${_sockets[@]}"; do
   echo "Examining $socket ..."
 
-  _lsof="`lsof $socket`"
+  _lsof="`sudo lsof $socket`"
   if [[ -n "$_lsof" ]]; then
     if [[ "$_lsof" == *sshd* ]]; then
       # Can this ever happen, now that we changed the pid detection
