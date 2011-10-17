@@ -146,7 +146,7 @@ sub handle_output {
   return unless length($_);
   return if /ping statistics|packets transmitted|^rtt /;
 
-  if (/^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_seq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
+  if (/^\d+ bytes from (\S+)(?: \((\S+)\))?: icmp_[rs]eq=(\d+) ttl=\d+ time=([\d.]+) ms/) {
     handle_echo_reply();
   }
   else {
