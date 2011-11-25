@@ -15,4 +15,4 @@ source "$ZDOTDIR/lib/libhooks.sh"
 
 rebuild_config "$config" "${confsubdir#$HOME/}"
 
-chmod go-rwx $confdir $confsubdir
+chmod go-rwx -R $config $confdir $confsubdir
