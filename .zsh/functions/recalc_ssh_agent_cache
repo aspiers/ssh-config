@@ -2,26 +2,71 @@
 
 # Returns 0 on success
 
+_detect_ssh_agent_pid () {
+    if [[ -n "$1" ]]; then
+        SSH_AGENT_PID="$1"
+    else
+        local pids
+        pids=( `pgrep -u $USER ssh-agent` )
+
+        if (( $#pids > 1 )); then
+            echo "$#pids pids found ($pids); aborting."
+            echo "Please ensure only one agent is running."
+            return 1
+        fi
+
+        SSH_AGENT_PID=$pids[1]
+    fi
+}
+
+# Parses output of `lsof $socket` contained in $_lsof and set
+# _socket_status accordingly.  Also outputs an indented version
+# of the output.
+_parse_lsof_output () {
+  unset _socket_status
+  if [[ "$_lsof" == *sshd* ]]; then
+    # Can this ever happen, now that we changed the pid detection
+    # from using ps | grep technique to using pidof?
+    _socket_status=fwd
+  elif [[ "$_lsof" == *ssh/master-* ]]; then
+    _socket_status=fwd # shared connection
+  elif [[ "$_lsof" == *ssh-agent* ]]; then
+    _socket_status=matched
+    #if ! [[ -g "$agentbin" ]]; then
+    if [[ "$USERNAME" != root ]]; then
+      cat <<'EOF' >&2
+*** WARNING! ***
+
+It looks like ssh-agent is neither setgid nor explicitly does
+prctl(PR_SET_DUMPABLE, 0) to disallow ptrace attaching.  lsof
+of $socket returned information, which suggests there is an
+insecure ssh-agent running.  Please fix.  For more info, see:
+
+  https://www.redhat.com/archives/fedora-devel-list/2004-December/msg00380.html
+
+EOF
+#    return 1
+    fi
+  elif [[ "$_lsof" == *gnome-key* ]]; then
+    # ssh-agent running but secure
+    :
+  else
+    echo "BUG? weird lsof output:\n$_lsof" >&2
+    return 1
+  fi
+  # The following code indents "$_lsof", i.e. does the same as:
+  #   echo "$_lsof" | sed -e 's/^/    /'
+  # by splitting at \n into an array (f), substituting start
+  # of each element (#s) for '    ' and rejoining with \n (F).
+  echo "${(F@)${(f)_lsof}//(#s)/    }"
+}
+
 export SSH_AGENT_PID=
 export SSH_AUTH_SOCK=
 
 echo "Recalculating ssh-agent info ..."
 
-if [[ -n "$1" ]]; then
-   SSH_AGENT_PID="$1"
-else
-    local pids
-    pids=( `pgrep -u $USER ssh-agent` )
-
-    if (( $#pids > 1 )); then
-        echo "$#pids pids found ($pids); aborting."
-        echo "Please ensure only one agent is running."
-        return 1
-    fi
-
-    SSH_AGENT_PID=$pids[1]
-fi
-
+_detect_ssh_agent_pid "$1" || return 1
 
 if [[ "$SSH_AGENT_PID" != *[0-9]* ]]; then
   # If interactive, prompt whether to start a new one.
@@ -74,45 +119,6 @@ if [[ "$agent_parent_pid" == 1 ]]; then
 else
   echo "Agent with pid $SSH_AGENT_PID has parent pid $agent_parent_pid"
 fi
-
-_parse_lsof_output () {
-  unset _socket_status
-  if [[ "$_lsof" == *sshd* ]]; then
-    # Can this ever happen, now that we changed the pid detection
-    # from using ps | grep technique to using pidof?
-    _socket_status=fwd
-  elif [[ "$_lsof" == *ssh/master-* ]]; then
-    _socket_status=fwd # shared connection
-  elif [[ "$_lsof" == *ssh-agent* ]]; then
-    _socket_status=matched
-    #if ! [[ -g "$agentbin" ]]; then
-    if [[ "$USERNAME" != root ]]; then
-      cat <<'EOF' >&2
-*** WARNING! ***
-
-It looks like ssh-agent is neither setgid nor explicitly does
-prctl(PR_SET_DUMPABLE, 0) to disallow ptrace attaching.  lsof
-of $socket returned information, which suggests there is an
-insecure ssh-agent running.  Please fix.  For more info, see:
-
-  https://www.redhat.com/archives/fedora-devel-list/2004-December/msg00380.html
-
-EOF
-#    return 1
-    fi
-  elif [[ "$_lsof" == *gnome-key* ]]; then
-    # ssh-agent running but secure
-    :
-  else
-    echo "BUG? weird lsof output:\n$_lsof" >&2
-    return 1
-  fi
-  # The following code indents "$_lsof", i.e. does the same as:
-  #   echo "$_lsof" | sed -e 's/^/    /'
-  # by splitting at \n into an array (f), substituting start
-  # of each element (#s) for '    ' and rejoining with \n (F).
-  echo "${(F@)${(f)_lsof}//(#s)/    }"
-}
 
 # Now we look for a socket corresponding to the ssh-agent we found running.
 for socket in "${_sockets[@]}"; do
