@@ -4,20 +4,29 @@ authkeys=.ssh/authorized_keys
 
 pubkey=$HOME/.ssh/id_rsa.pub
 
-if [ "$1" = '-1' ]; then
-  pubkey=$HOME/.ssh/identity.pub
-  shift
-fi
-
-if [ "$1" = '-d' ]; then
-  pubkey=$HOME/.ssh/id_dsa.pub
-  shift
-fi
-
-if [ "$1" = '-l' ]; then
-  user=$2
-  shift; shift
-fi
+while true; do
+    case "$1" in
+        -1)
+            pubkey=$HOME/.ssh/identity.pub
+            shift
+            ;;
+        -d)
+            pubkey=$HOME/.ssh/id_dsa.pub
+            shift
+            ;;
+        -f)
+            pubkey="$2"
+            shift; shift
+            ;;
+        -l)
+            user="$2"
+            shift; shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 me=`basename $0`
 
@@ -37,8 +46,17 @@ fi
 
 if ! [ -e "$pubkey" ]; then
   echo "$pubkey doesn't exist; aborting." >&2
-  usage
+  exit 1
 fi
+
+case "$pubkey" in
+    *.pub)
+        ;;
+    *)
+        echo "$pubkey doesn't end in '.pub'; aborting." >&2
+        exit 1
+        ;;
+esac
 
 for host in "$@"; do
   # quotes around last argument are necessary to allow
