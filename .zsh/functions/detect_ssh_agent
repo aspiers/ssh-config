@@ -2,7 +2,7 @@
 
 ssh_agent_valid && return 0
 
-_dsa_cache=/tmp/.dsa-cache-$USER-$HOST
+set_dsa_cache
 
 if [[ -r "$_dsa_cache" ]]; then
     source "$_dsa_cache"

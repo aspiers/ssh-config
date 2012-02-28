@@ -1,5 +1,29 @@
 #autoload
 
+# This makes for interesting reading:
+#
+#   http://blog.plover.com/Unix/ssh-agent-revisted.html
+#
+# Looks like he and others went through very similar thought processes
+# I did, and settled on the solution of caching the pid and socket
+# values in a predictably named file.  However my solution goes
+# several steps further, by trying to rescue the information if the
+# cache file is missing.  To this end it tries to guess the parent pid
+# of the ssh-agent if necessary, and even uses a heuristic approach in
+# the case that one likely looking socket is found but it cannot be
+# matched with a given process.
+#
+# Generally my code works pretty reliably these days.  One known issue
+# is that if ssh-agent disallows ptrace attaching, lsof won't yield
+# any output without resorting to use of sudo.
+#
+# Perhaps in my CFT, I should also check out
+#
+#   http://www.gentoo.org/doc/en/keychain-guide.xml
+#
+# and maybe even do the world a favour and port this to a lower common
+# denominator shell so more people can use it ...
+
 # Returns 0 on success
 
 _detect_ssh_agent_pid () {
@@ -23,7 +47,6 @@ _detect_ssh_agent_pid () {
 # _socket_status accordingly.  Also outputs an indented version
 # of the output.
 _parse_lsof_output () {
-  unset _socket_status
   if [[ "$_lsof" == *sshd* ]]; then
     # Can this ever happen, now that we changed the pid detection
     # from using ps | grep technique to using pidof?
@@ -124,9 +147,12 @@ fi
 for socket in "${_sockets[@]}"; do
   echo "Examining $socket ..."
 
-  _lsof="`lsof $socket`"
-  if [[ -n "$_lsof" ]]; then
+  unset _socket_status
+  
+  if _lsof="`lsof $socket`" && [[ -n "$_lsof" ]]; then
     _parse_lsof_output
+  else
+    echo "WARNING: lsof $socket failed"
   fi
   
   if [[ -z "$_socket_status" ]]; then

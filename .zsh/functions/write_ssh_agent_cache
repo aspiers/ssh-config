@@ -1,6 +1,8 @@
 #autoload
 
-cat >|/tmp/.dsa-cache-$USER-$HOST <<EOF
+set_dsa_cache
+
+cat >| "$_dsa_cache" <<EOF
 export SSH_AGENT_PID=$SSH_AGENT_PID
 export SSH_AUTH_SOCK=$SSH_AUTH_SOCK
 EOF

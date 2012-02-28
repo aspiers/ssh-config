@@ -1,0 +1,3 @@
+#autoload
+
+_dsa_cache=/tmp/.dsa-cache-$USER-${HOST%%.*}
