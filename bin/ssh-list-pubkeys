@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# List fingerprints of public keys in an authorized_keys or public key
+# file.
+#
+# from http://unix.stackexchange.com/questions/2116/given-keys-in-ssh-authorized-keys-format-can-you-determine-key-strength-easi
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me FILE-WITH-KEYS
+File can be authorized_keys or public key file (id_rsa.pub / identity.pub)
+EOF
+    exit "$exit_code"
+}
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+    usage 0
+fi
+
+[ $# == 1 ] || usage
+
+set -ue
+
+tmp="$(mktemp -t fingerprint-authkeys.XXXXXXXX)"
+trap 'rm -f "$tmp"' 0
+
+file="$1"
+
+if egrep -q -- '-----BEGIN .+ KEY-----' "$file"; then
+    usage "$file looks like a private key file; aborting."
+fi
+
+while read opts key; do
+    if [ -z "$key" ]; then
+        #echo "Couldn't parse line: [$opts $key]; ignoring"
+        continue
+    fi
+
+    case "$opts" in
+        [0-9]*|ssh-dss|ssh-rsa)
+            # not options, first "word" is part of key
+            key="$opts $key"
+        ;;
+    esac
+
+    echo "$key" > $tmp
+    if ! out=$(ssh-keygen -lf "$tmp"); then
+        cat <<EOF >&2
+
+Warning: ssh-keygen -l failed to run on file containing:
+
+`cat "$tmp"`
+
+Error was:
+$out
+
+Skipping key ...
+
+EOF
+        continue
+    fi
+
+    set -- $out
+
+    bits="$1" fingerprint="$2"
+
+    set -- $key # Note: will mangle whitespace in the comment
+    case "$1" in
+        [0-9]*) # SSH v1 key
+            type=rsa1
+            shift 3
+        ;;
+        ssh-rsa|ssh-dss) # SSH v2 key
+            type="$1"
+            shift 2
+        ;;
+        *)
+            type=unknown
+            set --
+        ;;
+    esac
+
+    printf '%-8s %-5s %s %s\n' "$type" "$bits" "$fingerprint" "$*"
+done < "$file"
