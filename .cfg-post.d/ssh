@@ -16,3 +16,7 @@ source "$ZDOTDIR/lib/libhooks.sh"
 rebuild_config "$config" "${confsubdir#$HOME/}"
 
 chmod go-rwx -R $config $confdir $confsubdir
+
+if which zsh >&/dev/null; then
+  zsh -c zrec
+fi
