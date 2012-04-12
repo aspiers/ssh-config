@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# This approach pinched from http://www.deadman.org/sshscreen.php
+
+sshvars="SSH_CLIENT SSH_TTY SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+    Usage: $me
+EOF
+    exit "$exit_code"
+}
+
+if [ "$#" == '-h' ] || [ "$1" == '--help' ]; then
+    usage 0
+fi
+
+if [ "$#" != 0 ]; then
+    usage
+fi
+
+dir=$HOME/.ssh/saved-environments
+if ! [ -d ~/.ssh ]; then
+    echo "$me: ~/.ssh did not exist?! aborting." >&2
+    exit 1
+fi
+[ -d $dir ] || mkdir $dir
+
+ssh_from_IP="${SSH_CONNECTION%% *}"
+if [ -z "$ssh_from_IP" ]; then
+    echo "$me: couldn't get ssh connection's originating IP from SSH_CONNECTION; aborting." >&2
+    exit 1
+fi
+
+for x in $sshvars; do
+    eval echo export "$x=\'\$$x\'"
+done > "$dir/$ssh_from_IP"
+
+echo "Saved to $dir/$ssh_from_IP"

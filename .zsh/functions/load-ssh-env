@@ -1,0 +1,32 @@
+#autoload
+
+# See save-ssh-env-vars
+
+sshvars="SSH_CLIENT SSH_TTY SSH_AUTH_SOCK SSH_CONNECTION DISPLAY"
+
+me=`basename $0`
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ] || [ $# != 1 ]; then
+    echo "Usage: $me IP-or-hostname" >&2
+    return 1
+fi
+
+dir=$HOME/.ssh/saved-environments
+
+if [ -e "$dir/$1" ]; then
+    IP="$1"
+else
+    hostname="$1"
+    if ! IP=`host "$hostname" | awk '/ has address / {print $4}'` || [ -z "$IP" ]; then
+        echo "Failed to determine IP of $hostname; aborting." >&2
+        return 1
+    fi
+fi
+
+if [ -e "$dir/$IP" ]; then
+    echo "sourcing $dir/$IP"
+    source "$dir/$IP"
+else
+    echo "No saved ssh environment for $IP"
+    return 1
+fi
