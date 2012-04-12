@@ -1,31 +1,34 @@
 #!/bin/sh
 
-# SSH_CLIENT always refers to the host which connected directly to
-# this one, which is not always the first in the chain of ssh hops.
-# It's useful to know the first too.
-if [ -z "$SSH_ORIG_CLIENT" ]; then
-    # Not passed via tunnelling hack above ...
-    if [ -n "$SSH_CLIENT" ]; then
-        # This is (hopefully) the server side of the first hop.
-        export SSH_ORIG_CLIENT="${SSH_CLIENT%% *}"
-    else
-        : # We're not using ssh at all.
-    fi
-else
-    : # Server side of seconder or greater hop.
-fi
+# In a chain of ssh hops:
+#
+#    host1 -> host2 -> host3 -> host4
+#
+# The first IP in the SSH_CONNECTION environment variable set by ssh
+# (and apparently the undocumented SSH_CLIENT too, presumably set for
+# backwards compatibility?) in host4's environment always refers to
+# host3.  A long time ago, I wrote here that it would be useful to
+# know the IP of host1 too (why?), but we can only do this by
+# preserving it across machines as each new ssh hop is created.  I
+# tried embedding the value inside the seldom-used LC_TELEPHONE which
+# is typically listed as one of the arguments to AcceptEnv in most
+# distributions' sshd_config file (this would have obviated the need
+# for adding a new variable to sshd_config everywhere), but this
+# surprisingly broke stuff which did depend on it after all.  So in
+# the end I gave up on the idea.
+#
+# For now I'll just comment out until I can remember why I wanted it,
+# at which point I'll try to think of another solution, e.g.
+# http://superuser.com/questions/48783/how-can-i-pass-an-environment-variable-through-an-ssh-command
 
-# SSH_CLIENT always refers to the host which connected directly to
-# this one, which is not always the first in the chain of ssh hops.
-# It's useful to know the first too.
-if [ -z "$SSH_ORIG_CLIENT" ]; then
-    # Not passed via tunnelling hack (see ~/.ssh/rc)
-    if [ -n "$SSH_CLIENT" ]; then
-        # This is (hopefully) the server side of the first hop.
-        export SSH_ORIG_CLIENT="${SSH_CLIENT%% *}"
-    else
-        : # We're not using ssh at all.
-    fi
-else
-    : # Server side of seconder or greater hop.
-fi
+# if [ -z "$SSH_ORIG_CLIENT" ]; then
+#     # Not passed via tunnelling hack above ...
+#     if [ -n "$SSH_CLIENT" ]; then
+#         # This is (hopefully) the server side of the first hop.
+#         export SSH_ORIG_CLIENT="${SSH_CLIENT%% *}"
+#     else
+#         : # We're not using ssh at all.
+#     fi
+# else
+#     : # Server side of second or greater hop.
+# fi
