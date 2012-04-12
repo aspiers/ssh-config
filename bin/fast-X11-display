@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Used by quick-emacs to determine whether to launch
+# an X11-based or tty-based emacsclient.
+
 export PERL5LIB=$ZDOTDIR/lib/perl5
 
 case "`get-connection-type`" in

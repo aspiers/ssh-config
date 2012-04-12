@@ -1,4 +1,14 @@
-#!/bin/bash
+#!/bin/sh
+
+# If the emacs server is running on host S, we might want to ssh to
+# host S from host X and start up a new emacs client frame which
+# displays on host X.
+#
+# So this script is called by quick-emacs to ensure that the
+# xauthority file currently being used by the running emacs server,
+# which is used when executing `make-frame-on-display', contains a
+# valid X cookie for the display passed as a parameter to that
+# function (i.e. $DISPLAY)
 
 if xauthority=`get-emacs-server-xauthority 2>&1`; then
     xauth -f "$xauthority" add `get-spoofed-ssh-xauth-key`
