@@ -11,10 +11,10 @@ fi
 
 if ! [[ -t 0 ]]; then
     echo
-    echo "No identities in ssh-agent pid $SSH_AGENT_PID but STDIN not a tty so can't add one :-(" >&2
+    echo "No identities in ssh-agent pid ${SSH_AGENT_PID:-<forwarded via $sockpid>} but STDIN not a tty so can't add one :-(" >&2
     return 1
 fi
 
 echo
-echo "ssh-agent pid $SSH_AGENT_PID has no identities; please add one ..."
+echo "ssh-agent pid ${SSH_AGENT_PID:-<forwarded via $sockpid>} has no identities; please add one ..."
 ssh-add
