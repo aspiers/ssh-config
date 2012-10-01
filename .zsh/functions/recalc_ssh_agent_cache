@@ -43,6 +43,15 @@ _detect_ssh_agent_pid () {
     fi
 }
 
+_run_lsof () {
+    if [[ -n "$_use_sudo" ]]; then
+        _lsof="`sudo lsof $socket 2>&1 | egrep -v 'gvfs|Output information may be incomplete'`"
+    else
+        _lsof="`lsof $socket`"
+    fi
+    [[ -n "$_lsof" ]]
+}
+
 # Parses output of `lsof $socket` contained in $_lsof and set
 # _socket_status accordingly.  Also outputs an indented version
 # of the output.
@@ -55,21 +64,6 @@ _parse_lsof_output () {
     _socket_status=fwd # shared connection
   elif [[ "$_lsof" == *ssh-agent* ]]; then
     _socket_status=matched
-    #if ! [[ -g "$agentbin" ]]; then
-    if [[ "$USERNAME" != root ]]; then
-      cat <<'EOF' >&2
-*** WARNING! ***
-
-It looks like ssh-agent is neither setgid nor explicitly does
-prctl(PR_SET_DUMPABLE, 0) to disallow ptrace attaching.  lsof
-of $socket returned information, which suggests there is an
-insecure ssh-agent running.  Please fix.  For more info, see:
-
-  https://www.redhat.com/archives/fedora-devel-list/2004-December/msg00380.html
-
-EOF
-#    return 1
-    fi
   elif [[ "$_lsof" == *gnome-key* ]]; then
     # ssh-agent running but secure
     :
@@ -81,7 +75,7 @@ EOF
   #   echo "$_lsof" | sed -e 's/^/    /'
   # by splitting at \n into an array (f), substituting start
   # of each element (#s) for '    ' and rejoining with \n (F).
-  echo "${(F@)${(f)_lsof}//(#s)/    }"
+  #echo "${(F@)${(f)_lsof}//(#s)/    }"
 }
 
 export SSH_AGENT_PID=
@@ -122,8 +116,9 @@ if (( $#_sockets == 0 )); then
 fi
 
 local -a _dead_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
-echo "$#_sockets socket(s) found: $_sockets[*]"
-  
+echo "$#_sockets socket(s) found:"
+echo "${(F)_sockets[@]//(#s)/  }"
+
 if ! agentbin="`which ssh-agent`"; then
   echo "Error: couldn't find ssh-agent!  Aborting."
   return 1
@@ -143,18 +138,27 @@ else
   echo "Agent with pid $SSH_AGENT_PID has parent pid $agent_parent_pid"
 fi
 
+if sudo -n -l lsof > /dev/null; then
+  echo "Can use sudo without password"
+  _use_sudo=yes
+else
+  echo "Can't use sudo without password"
+  _use_sudo=
+fi
+
 # Now we look for a socket corresponding to the ssh-agent we found running.
 for socket in "${_sockets[@]}"; do
+  echo
   echo "Examining $socket ..."
 
   unset _socket_status
   
-  if _lsof="`lsof $socket`" && [[ -n "$_lsof" ]]; then
+  if _run_lsof; then
     _parse_lsof_output
   else
-    echo "WARNING: lsof $socket failed"
+    echo "WARNING: ${_use_sudo:+sudo }lsof $socket generated no output"
   fi
-  
+
   if [[ -z "$_socket_status" ]]; then
     # ssh-agent is secure, so without useful info from lsof or fuser,
     # we have to do it the hard way :-(
@@ -193,10 +197,14 @@ for socket in "${_sockets[@]}"; do
           echo "  $socket appears dead"
           _dead_sockets=( "${_dead_sockets[@]}" "$socket" )
           ;;
-
-    *) echo BUG >&2 ; return 1 ;;
+    *)
+          echo BUG >&2
+          return 1
+          ;;
   esac
 done
+
+echo
 
 if (( $#_dead_sockets > 0 )); then
   echo "Could remove dead sockets:\n  rm $_dead_sockets"
