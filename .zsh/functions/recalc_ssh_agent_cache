@@ -138,7 +138,7 @@ fi
 agent_parent_pid=$( awk '{print $4}' /proc/$SSH_AGENT_PID/stat )
 if [[ "$agent_parent_pid" == 1 ]]; then
   guessed_agent_parent_pid=$(( SSH_AGENT_PID - 1 ))
-  echo "Agent with pid $SSH_AGENT_PID has been adopted by init; guessing parent pid $agent_parent_pid"
+  echo "Agent with pid $SSH_AGENT_PID has been adopted by init; guessing parent pid $guessed_agent_parent_pid"
 else
   echo "Agent with pid $SSH_AGENT_PID has parent pid $agent_parent_pid"
 fi
