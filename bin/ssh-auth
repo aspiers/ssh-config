@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Shell script to install your public key on remote machines.
+# This is like upstream's ssh-copy-id, but works for multiple
+# machines in one go, and supports more convenient selection
+# of the key to copy.
+
 authkeys=.ssh/authorized_keys
 
 pubkey=$HOME/.ssh/id_rsa.pub
