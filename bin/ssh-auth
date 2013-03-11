@@ -37,10 +37,12 @@ me=`basename $0`
 
 usage () {
   cat <<EOF >&2
-Usage: $me [options] [USER@]HOST
+Usage: $me [options] HOST [HOST ...]
 Options:
-  -1   Use old ssh v1 keys
-  -d   Use DSA key
+  -1          Use old ssh v1 keys
+  -d          Use DSA key
+  -f KEYFILE  Use specified KEYFILE
+  -l USER     Set remote user to copy to
 EOF
   exit 1
 }
