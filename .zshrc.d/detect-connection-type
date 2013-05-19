@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+mkdir -p ~/.log
+
 # Needs to be in a subshell to suppress job messages
 (
 #    [ "`get-connection-type`" = 'unknown' ] &&
