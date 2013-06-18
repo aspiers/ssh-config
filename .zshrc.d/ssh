@@ -10,21 +10,26 @@ ssh () {
     # Finally, strip off .* domain component, if any.
     cx "${${${(M@)argv:#*@*}:-$1}%%.[a-z]*}" 
 
-    command ssh $sshargs "$@"
+    [[ -z "$sshargs" ]] && sshargs=()
+    command ssh "$sshargs[@]" "$@"
+}
+
+sshx () {
+    TERM=xterm ssh "$@"
 }
 
 ssh2 () {
     if [ -n "$SSH_ORIG_CLIENT" ]; then
         # see ~/.shared_rc.d/ssh
-        export LC_TELEPHONE_ORIG="${LC_TELEPHONE}"
+        export LC_TELEPHONE_ORIG="$LC_TELEPHONE"
         export LC_TELEPHONE="${LC_TELEPHONE}^^export SSH_ORIG_CLIENT=${SSH_ORIG_CLIENT}"
-        sshargs="-o SendEnv=LC_TELEPHONE"
-        #sshargs="-o SendEnv=SSH_ORIG_CLIENT"
+        sshargs=( -o SendEnv=LC_TELEPHONE )
+        #sshargs=( -o SendEnv=SSH_ORIG_CLIENT )
     fi
 
     ssh "$@"
 
     if [ "$+LC_TELEPHONE_ORIG" = 1 ]; then
-        LC_TELEPHONE="${LC_TELEPHONE_ORIG}"
+        LC_TELEPHONE="$LC_TELEPHONE_ORIG"
     fi
 }
