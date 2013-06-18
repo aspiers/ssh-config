@@ -15,7 +15,9 @@ ssh () {
 }
 
 sshx () {
+    oldterm="$TERM"
     TERM=xterm ssh "$@"
+    TERM="$oldterm"
 }
 
 ssh2 () {
