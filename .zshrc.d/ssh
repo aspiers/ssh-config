@@ -2,16 +2,27 @@
 
 # See ~/.shared_env.d/ssh
 
-ssh () {
-    setopt local_traps
-    trap 'cxx' INT EXIT QUIT KILL
+_pre_ssh () {
     dsa
     # Pick out user@host word from argv; if it's not found, default to $1.
     # Finally, strip off .* domain component, if any.
     cx "${${${(M@)argv:#*@*}:-$1}%%.[a-z]*}" 
 
     [[ -z "$sshargs" ]] && sshargs=()
+}
+
+ssh () {
+    setopt local_traps
+    trap 'cxx' INT EXIT QUIT KILL
+    _pre_ssh "$@"
     command ssh "$sshargs[@]" "$@"
+}
+
+mosh () {
+    setopt local_traps
+    trap 'cxx' INT EXIT QUIT KILL
+    _pre_ssh "$@"
+    command mosh "$sshargs[@]" "$@"
 }
 
 sshx () {
