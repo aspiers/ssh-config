@@ -1,0 +1,4 @@
+#compdef sshx
+
+service=ssh
+_ssh "$@"
