@@ -4,18 +4,68 @@
 
 _pre_ssh () {
     dsa
-    # Pick out user@host word from argv; if it's not found, default to $1.
-    # Finally, strip off .* domain component, if any.
-    cx "${${${(M@)argv:#*@*}:-$1}%%.[a-z]*}" 
 
-    [[ -z "$sshargs" ]] && sshargs=()
+    _parse_ssh_args "$@" || return $?
+}
+
+_parse_ssh_args () {
+    # Pick out user@host word from argv; if it's not found, default to $1.
+    #ssh_target="${${(M@)argv:#*@*}:-$1}"
+
+    _ssh_args=()
+    _ssh_target=
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            # FIXME: add support for option bundling
+            -[1246AaCfgKkMNnqsTtVvXxYy])
+                _ssh_args+="$1"
+                shift
+                ;;
+            -[bcDeFIiLmOopRSWw])
+                _ssh_args+=("$1" "$2")
+                shift 2
+                ;;
+            -l)
+                _ssh_target_user="$2"
+                _ssh_args+=("$1" "$2")
+                shift 2
+                ;;
+            -*)
+                echo >&2 "ERROR: _parse_ssh_args didn't understand $1"
+                return 1
+                ;;
+            *)
+                if [[ -z "$_ssh_target" ]]; then
+                    _ssh_target="$1"
+                    if [[ "$_ssh_target" == *@* ]]; then
+                        _ssh_target_user="${_ssh_target%@*}"
+                        _ssh_target_host="${_ssh_target#*@}"
+                    else
+                        _ssh_target_host="${_ssh_target}"
+                    fi
+
+                    # Strip off .* domain component, if any.
+                    _ssh_target_short_host="${_ssh_target_host%%.[a-z]*}"
+
+                else
+                    break
+                fi
+                ;;
+        esac
+    done
+
+    : ${DEBUG_LOCAL_HOOKS:=0}
+    run_hooks .ssh/pre.d
 }
 
 ssh () {
-    setopt local_traps
-    trap 'cxx' INT EXIT QUIT KILL
-    _pre_ssh "$@"
-    command ssh "$sshargs[@]" "$@"
+    (
+        setopt local_traps
+        trap 'cxx' INT EXIT QUIT KILL
+        _pre_ssh "$@"
+        command ssh "$_ssh_args[@]" "$@"
+    )
 }
 
 mosh () {
@@ -23,12 +73,6 @@ mosh () {
     trap 'cxx' INT EXIT QUIT KILL
     _pre_ssh "$@"
     command mosh "$sshargs[@]" "$@"
-}
-
-sshx () {
-    oldterm="$TERM"
-    TERM=xterm ssh "$@"
-    TERM="$oldterm"
 }
 
 ssh2 () {
