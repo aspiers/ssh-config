@@ -55,8 +55,7 @@ _parse_ssh_args () {
         esac
     done
 
-    : ${DEBUG_LOCAL_HOOKS:=0}
-    run_hooks .ssh/pre.d
+    DEBUG_LOCAL_HOOKS=0 run_hooks .ssh/pre.d
 }
 
 ssh () {
