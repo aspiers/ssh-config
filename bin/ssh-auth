@@ -9,6 +9,7 @@ authkeys=.ssh/authorized_keys
 
 pubkey=$HOME/.ssh/id_rsa.pub
 
+port=
 while true; do
     case "$1" in
         -1)
@@ -21,11 +22,15 @@ while true; do
             ;;
         -f)
             pubkey="$2"
-            shift; shift
+            shift 2
             ;;
         -l)
             user="$2"
-            shift; shift
+            shift 2
+            ;;
+        -p)
+            port="-p $2"
+            shift 2
             ;;
         *)
             break
@@ -43,6 +48,7 @@ Options:
   -d          Use DSA key
   -f KEYFILE  Use specified KEYFILE
   -l USER     Set remote user to copy to
+  -p PORT     Set port to use
 EOF
   exit 1
 }
@@ -69,7 +75,7 @@ for host in "$@"; do
   # quotes around last argument are necessary to allow
   # ssh-auth '-p 2263 root@localhost'
   # see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=99785
-  ssh-copy-id -i "$pubkey" "${user+$user@}$host"
+  ssh-copy-id -i "$pubkey" $port "${user+$user@}$host"
 done
 
 # echo "Appending following keys from $pubkey to remote $authkeys:"
