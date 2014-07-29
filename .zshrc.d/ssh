@@ -74,6 +74,12 @@ mosh () {
     command mosh "$sshargs[@]" "$@"
 }
 
+sshx () {
+    oldterm="$TERM"
+    TERM=xterm ssh "$@"
+    TERM="$oldterm"
+}
+
 ssh2 () {
     if [ -n "$SSH_ORIG_CLIENT" ]; then
         # see ~/.shared_rc.d/ssh
