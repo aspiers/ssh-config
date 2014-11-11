@@ -15,10 +15,11 @@ _parse_ssh_args () {
     _ssh_args=()
     _ssh_target=
 
+    setopt extended_glob
+
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            # FIXME: add support for option bundling
-            -[1246AaCfgKkMNnqsTtVvXxYy])
+            -[1246AaCfgKkMNnqsTtVvXxYy]##)
                 _ssh_args+="$1"
                 shift
                 ;;
