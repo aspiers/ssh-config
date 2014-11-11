@@ -71,7 +71,7 @@ mosh () {
     setopt local_traps
     trap 'cxx' INT EXIT QUIT KILL
     _pre_ssh "$@"
-    command mosh "$sshargs[@]" "$@"
+    command mosh "$_ssh_args[@]" "$@"
 }
 
 sshx () {
@@ -85,8 +85,8 @@ ssh2 () {
         # see ~/.shared_rc.d/ssh
         export LC_TELEPHONE_ORIG="$LC_TELEPHONE"
         export LC_TELEPHONE="${LC_TELEPHONE}^^export SSH_ORIG_CLIENT=${SSH_ORIG_CLIENT}"
-        sshargs=( -o SendEnv=LC_TELEPHONE )
-        #sshargs=( -o SendEnv=SSH_ORIG_CLIENT )
+        _ssh_args=( -o SendEnv=LC_TELEPHONE )
+        #ssh_args=( -o SendEnv=SSH_ORIG_CLIENT )
     fi
 
     ssh "$@"
