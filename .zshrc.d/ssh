@@ -23,7 +23,7 @@ _parse_ssh_args () {
                 _ssh_opts+="$1"
                 shift
                 ;;
-            -[bcDeFIiLmOopRSWw])
+            -[bcDeFIiLmOopQRSWw])
                 _ssh_opts+=("$1" "$2")
                 shift 2
                 ;;
