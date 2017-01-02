@@ -5,6 +5,11 @@
 
 export PERL5LIB=$ZDOTDIR/lib/perl5
 
+if [ -z "$DISPLAY" ]; then
+    # We don't have a fast *or* slow X11 display
+    exit 1
+fi
+
 case "`get-connection-type`" in
     local|lan)
         exit 0 ;;
