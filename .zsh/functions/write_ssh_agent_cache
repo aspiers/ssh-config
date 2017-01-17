@@ -7,8 +7,13 @@ export SSH_AGENT_PID=$SSH_AGENT_PID
 export SSH_AUTH_SOCK=$SSH_AUTH_SOCK
 EOF
 
-cat <<EOF 
-Wrote info to ssh-agent cache:
+cat <<EOF
+Wrote info to ssh-agent caches:
     pid:    $SSH_AGENT_PID
     socket: $SSH_AUTH_SOCK
+EOF
+
+cat >| "$_dsa_cache.el" <<EOF
+(setenv "SSH_AGENT_PID" "$SSH_AGENT_PID")
+(setenv "SSH_AUTH_SOCK" "$SSH_AUTH_SOCK")
 EOF
