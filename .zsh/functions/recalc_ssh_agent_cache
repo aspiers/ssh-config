@@ -67,6 +67,8 @@ _parse_lsof_output () {
   elif [[ "$_lsof" == *gnome-key* ]]; then
     # ssh-agent running but secure
     :
+  elif [[ "$_lsof" == *"WARNING: can't stat"*/keybase ]]; then
+    :
   else
     echo "BUG? weird lsof output:\n$_lsof" >&2
     return 1
