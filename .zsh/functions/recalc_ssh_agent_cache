@@ -154,7 +154,7 @@ for socket in "${_sockets[@]}"; do
   echo "Examining $socket ..."
 
   unset _socket_status
-  
+
   if _run_lsof; then
     _parse_lsof_output
   else
@@ -191,7 +191,7 @@ for socket in "${_sockets[@]}"; do
           echo "  $socket of unknown origin"
           _unknown_sockets=( "${_unknown_sockets[@]}" "$socket" )
           ;;
-    matched) 
+    matched)
           echo "  $socket matched agent pid $SSH_AGENT_PID"
           _matched_sockets=( "${_matched_sockets[@]}" "$socket" )
           ;;
