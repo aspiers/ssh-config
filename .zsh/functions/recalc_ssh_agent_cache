@@ -117,6 +117,7 @@ if (( $#_sockets == 0 )); then
   return 1
 fi
 
+unset _dead_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
 local -a _dead_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
 echo "$#_sockets socket(s) found:"
 echo "${(F)_sockets[@]//(#s)/  }"
