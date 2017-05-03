@@ -207,12 +207,17 @@ for socket in "${_sockets[@]}"; do
   esac
 done
 
-echo
-
 if (( $#_dead_sockets > 0 )); then
-  echo "Could remove dead sockets:\n  rm $_dead_sockets"
+  echo "\nCould remove dead sockets:\n  rm $_dead_sockets"
   #rm "$_dead_sockets[@]"
 fi
+
+if (( $#_unknown_sockets > 0 )); then
+  echo "\nCould remove unknown sockets:\n  rm $_unknown_sockets"
+  #rm "$_unknown_sockets[@]"
+fi
+
+echo
 
 if (( $#_matched_sockets != 1 )); then
   if (( $#_unknown_sockets == 1 && $#_dead_sockets == 0 )); then
