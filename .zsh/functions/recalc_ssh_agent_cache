@@ -117,8 +117,8 @@ if (( $#_sockets == 0 )); then
   return 1
 fi
 
-unset _dead_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
-local -a _dead_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
+unset _unknown_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
+local -a _unknown_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
 echo "$#_sockets socket(s) found:"
 echo "${(F)_sockets[@]//(#s)/  }"
 
@@ -196,21 +196,12 @@ for socket in "${_sockets[@]}"; do
           echo "  $socket matched agent pid $SSH_AGENT_PID"
           _matched_sockets=( "${_matched_sockets[@]}" "$socket" )
           ;;
-    dead)
-          echo "  $socket appears dead"
-          _dead_sockets=( "${_dead_sockets[@]}" "$socket" )
-          ;;
     *)
           echo BUG >&2
           return 1
           ;;
   esac
 done
-
-if (( $#_dead_sockets > 0 )); then
-  echo "\nCould remove dead sockets:\n  rm $_dead_sockets"
-  #rm "$_dead_sockets[@]"
-fi
 
 if (( $#_unknown_sockets > 0 )); then
   echo "\nCould remove unknown sockets:\n  rm $_unknown_sockets"
@@ -220,8 +211,8 @@ fi
 echo
 
 if (( $#_matched_sockets != 1 )); then
-  if (( $#_unknown_sockets == 1 && $#_dead_sockets == 0 )); then
-    echo "Only one unknown socket $_unknown_sockets[1] and none dead; assuming it's matched."
+  if (( $#_unknown_sockets == 1 )); then
+    echo "Only one unknown socket $_unknown_sockets[1]; assuming it's matched."
     : ${SSH_AUTH_SOCK:=$_unknown_sockets[1]}
   else
     echo "BUG?  Didn't find a unique matched socket" >&2
