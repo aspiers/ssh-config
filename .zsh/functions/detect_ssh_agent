@@ -6,7 +6,7 @@ set_dsa_cache
 
 if [[ -r "$_dsa_cache" ]]; then
     source "$_dsa_cache"
-    cat <<EOF 
+    cat <<EOF
 Read ssh-agent details from $_dsa_cache :
     pid:    $SSH_AGENT_PID
     socket: $SSH_AUTH_SOCK
