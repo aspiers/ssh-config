@@ -102,9 +102,9 @@ if [[ "$SSH_AGENT_PID" != *[0-9]* ]]; then
       return 1
     fi
   else
-    eval `ssh-agent`
-    write_ssh_agent_cache
-    return 0
+    echo >&2 "ssh-agent process not found and can't safely start one" \
+             "non-interactively as it may have the wrong pgrp/cgroup; aborting."
+    return 1
   fi
 fi
 
