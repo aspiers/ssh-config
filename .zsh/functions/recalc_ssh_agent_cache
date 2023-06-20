@@ -31,7 +31,12 @@ _detect_ssh_agent_pid () {
         SSH_AGENT_PID="$1"
     else
         local pids
-        pids=( `pgrep -u $USER ssh-agent` )
+        pids=(
+            $(
+                ps -xo pid,cmd |
+                    awk '/ssh-agent/ && !/<defunct>/ {print $1}'
+            )
+        )
 
         if (( $#pids > 1 )); then
             echo "$#pids pids found ($pids); aborting."
