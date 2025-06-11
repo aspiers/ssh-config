@@ -39,7 +39,7 @@ trap 'rm -f "$tmp"' 0
 
 file="$1"
 
-if egrep -q -- '-----BEGIN .+ KEY-----' "$file"; then
+if grep -Eq -- '-----BEGIN .+ KEY-----' "$file"; then
     usage "$file looks like a private key file; aborting."
 fi
 
