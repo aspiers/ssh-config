@@ -50,7 +50,7 @@ _detect_ssh_agent_pid () {
 
 _run_lsof () {
     if [[ -n "$_use_sudo" ]]; then
-        _lsof="`sudo lsof $socket 2>&1 | egrep -v 'gvfs|Output information may be incomplete'`"
+        _lsof="`sudo lsof $socket 2>&1 | grep -Ev 'gvfs|Output information may be incomplete'`"
     else
         _lsof="`lsof $socket`"
     fi
