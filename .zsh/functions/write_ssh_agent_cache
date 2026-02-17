@@ -17,3 +17,7 @@ cat >| "$_dsa_cache.el" <<EOF
 (setenv "SSH_AGENT_PID" "$SSH_AGENT_PID")
 (setenv "SSH_AUTH_SOCK" "$SSH_AUTH_SOCK")
 EOF
+
+# Provide a stable socket path for ovh-agent-tunnel.service and
+# its RemoteForward directive which need a fixed path to the agent.
+ln -sf "$SSH_AUTH_SOCK" ~/.ssh/agent.sock
