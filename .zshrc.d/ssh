@@ -64,16 +64,28 @@ _parse_ssh_args () {
 ssh () {
     (
         setopt local_traps
-        trap 'cxx' INT EXIT QUIT KILL
-        _pre_ssh "$@"
+        # cxx and _pre_ssh are interactive terminal-title / ssh-agent
+        # helpers; both are absent in non-interactive shells whose
+        # function set was captured without them (e.g. Claude Code's
+        # shell snapshot strips _-prefixed functions).  Guard on their
+        # presence so we fall back to a plain ssh with the real args
+        # rather than running ssh with an empty _ssh_args.
+        whence -w cxx >/dev/null && trap 'cxx' INT EXIT QUIT KILL
+        _ssh_opts=() _ssh_args=("$@")
+        if whence -w _pre_ssh >/dev/null; then
+            _pre_ssh "$@" || return $?
+        fi
         command ssh "$_ssh_opts[@]" "$_ssh_args[@]"
     )
 }
 
 mosh () {
     setopt local_traps
-    trap 'cxx' INT EXIT QUIT KILL
-    _pre_ssh "$@"
+    whence -w cxx >/dev/null && trap 'cxx' INT EXIT QUIT KILL
+    _ssh_opts=() _ssh_args=("$@")
+    if whence -w _pre_ssh >/dev/null; then
+        _pre_ssh "$@" || return $?
+    fi
     command mosh "$_ssh_opts[@]" "$_ssh_args[@]"
 }
 
