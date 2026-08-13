@@ -33,8 +33,8 @@ _detect_ssh_agent_pid () {
         local pids
         pids=(
             $(
-                ps -xo pid,cmd |
-                    awk '/ssh-agent/ && !/<defunct>/ {print $1}'
+                ps -xo pid=,stat=,comm= |
+                    awk '$2 !~ /^Z/ && $3 == "ssh-agent" {print $1}'
             )
         )
 
@@ -115,15 +115,17 @@ fi
 
 echo "Found a single owned ssh-agent, pid $SSH_AGENT_PID"
 
-_sockets=( /tmp/ssh-*/*(=UN) )
+# OpenSSH 10.5 switched its default from /tmp/ssh-*/agent.<ppid> to
+# randomly named sockets under ~/.ssh/agent/.  Keep supporting both forms.
+_sockets=( /tmp/ssh-*/*(=UN) "$HOME"/.ssh/agent/s.*(=UN) )
 
 if (( $#_sockets == 0 )); then
   echo "No sockets found; aborting."
   return 1
 fi
 
-unset _unknown_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
-local -a _unknown_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
+unset _unknown_sockets _legacy_unknown_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
+local -a _unknown_sockets _legacy_unknown_sockets _matched_sockets _orphan_sockets guessed_parent_pid socket
 echo "$#_sockets socket(s) found:"
 echo "${(F)_sockets[@]//(#s)/  }"
 
@@ -194,7 +196,12 @@ for socket in "${_sockets[@]}"; do
           echo "  $socket used for agent forwarding"
           ;;
     unknown)
-          echo "  $socket of unknown origin"
+          if [[ "$socket" == "$HOME"/.ssh/agent/s.* ]]; then
+            echo "  $socket is a modern OpenSSH socket whose pid is not encoded in its name"
+          else
+            echo "  $socket of unknown origin"
+            _legacy_unknown_sockets=( "${_legacy_unknown_sockets[@]}" "$socket" )
+          fi
           _unknown_sockets=( "${_unknown_sockets[@]}" "$socket" )
           ;;
     matched)
@@ -208,8 +215,8 @@ for socket in "${_sockets[@]}"; do
   esac
 done
 
-if (( $#_unknown_sockets > 0 )); then
-  echo "\nCould remove unknown sockets:\n  rm $_unknown_sockets"
+if (( $#_legacy_unknown_sockets > 0 )); then
+  echo "\nCould remove unknown sockets:\n  rm $_legacy_unknown_sockets"
   #rm "$_unknown_sockets[@]"
 fi
 

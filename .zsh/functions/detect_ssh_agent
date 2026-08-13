@@ -14,4 +14,12 @@ EOF
     ssh_agent_valid && return 0
 fi
 
-recalc_ssh_agent_cache
+# Preserve a live pid supplied by the session.  This also avoids choosing
+# between multiple agents when the session already identifies the right one.
+local agent_pid="$SSH_AGENT_PID"
+if [[ -n "$agent_pid" && -e "/proc/$agent_pid/cmdline" ]] &&
+   grep -q ssh-agent "/proc/$agent_pid/cmdline"; then
+    recalc_ssh_agent_cache "$agent_pid"
+else
+    recalc_ssh_agent_cache
+fi
