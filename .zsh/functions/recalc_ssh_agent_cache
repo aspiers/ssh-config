@@ -115,9 +115,34 @@ fi
 
 echo "Found a single owned ssh-agent, pid $SSH_AGENT_PID"
 
+# An agent may bind an arbitrary socket with -a, as gnome-keyring does.
+# Read its argv directly because ps output may truncate the socket path.
+local -a _agent_argv _configured_sockets
+local configured_socket i
+_agent_argv=( "${(@0)$(<"/proc/$SSH_AGENT_PID/cmdline")}" )
+for (( i = 1; i <= $#_agent_argv; i++ )); do
+  case "$_agent_argv[$i]" in
+    -a)
+      if (( i < $#_agent_argv )); then
+        configured_socket="$_agent_argv[$(( i + 1 ))]"
+        [[ -S "$configured_socket" ]] && _configured_sockets+=( "$configured_socket" )
+      fi
+      ;;
+    -a?*)
+      configured_socket="${_agent_argv[$i]#-a}"
+      [[ -S "$configured_socket" ]] && _configured_sockets+=( "$configured_socket" )
+      ;;
+  esac
+done
+
 # OpenSSH 10.5 switched its default from /tmp/ssh-*/agent.<ppid> to
-# randomly named sockets under ~/.ssh/agent/.  Keep supporting both forms.
-_sockets=( /tmp/ssh-*/*(=UN) "$HOME"/.ssh/agent/s.*(=UN) )
+# randomly named sockets under ~/.ssh/agent/.  Keep supporting both forms,
+# plus any explicit bind address found above.
+_sockets=(
+  /tmp/ssh-*/*(=UN)
+  "$HOME"/.ssh/agent/s.*(=UN)
+  "${_configured_sockets[@]}"
+)
 
 if (( $#_sockets == 0 )); then
   echo "No sockets found; aborting."
@@ -163,10 +188,20 @@ for socket in "${_sockets[@]}"; do
 
   unset _socket_status
 
-  if _run_lsof; then
-    _parse_lsof_output
-  else
-    echo "WARNING: ${_use_sudo:+sudo }lsof $socket generated no output"
+  for configured_socket in "${_configured_sockets[@]}"; do
+    if [[ "$socket" == "$configured_socket" ]]; then
+      _socket_status=matched
+      echo "  socket configured by ssh-agent's -a option"
+      break
+    fi
+  done
+
+  if [[ -z "$_socket_status" ]]; then
+    if _run_lsof; then
+      _parse_lsof_output
+    else
+      echo "WARNING: ${_use_sudo:+sudo }lsof $socket generated no output"
+    fi
   fi
 
   if [[ -z "$_socket_status" ]]; then
