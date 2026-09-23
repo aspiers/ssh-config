@@ -2,6 +2,17 @@
 
 ssh_agent_valid && return 0
 
+# Prefer the systemd user agent (ssh-agent.socket).  It only exports
+# SSH_AUTH_SOCK into the systemd user environment, so ssh logins never
+# see it, and its socket is held by systemd rather than ssh-agent, so
+# recalc_ssh_agent_cache's lsof matching can't find it.
+local systemd_sock="${XDG_RUNTIME_DIR:-/run/user/$UID}/openssh_agent"
+if [[ -z "$SSH_AUTH_SOCK" && -S "$systemd_sock" ]]; then
+    export SSH_AUTH_SOCK="$systemd_sock"
+    unset SSH_AGENT_PID
+    ssh_agent_valid && return 0
+fi
+
 set_dsa_cache
 
 if [[ -r "$_dsa_cache" ]]; then
